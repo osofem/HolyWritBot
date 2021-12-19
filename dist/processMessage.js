@@ -83,14 +83,14 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 chat_id: content.chatID,
                 text: "Hello " + firstName + "! I am the Holy Writ bot, your one-stop bot for your bible straight with Telegram." + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL +
                     "To use me, simply send the bible verse in the format <code>book chapter:verse</code> or <code>book chapter verse</code> (e.g. <b><i>1 John 2:5</i></b> or <b><i>1 John 2 5</i></b>). Or better still, use the bot commands!" + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL +
-                    "To search for a scripture, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
+                    "To search, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
                 parse_mode: "HTML"
             });
         }
         else if (content.text == "/s") {
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                 chat_id: content.chatID,
-                text: "To search for a scripture, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
+                text: "To search, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
                 parse_mode: "HTML"
             });
         }
@@ -126,11 +126,12 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             const holySearch = new holySearch_1.default();
             let searchResults = yield holySearch.search(searchTerm);
             let lengthToReturn = Math.min(searchResults.length, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f"));
+            let nextIndex = lengthToReturn == searchResults.length ? 0 : lengthToReturn;
             //keyboard
             let inline_keyboard = [];
             inline_keyboard.push([
                 { text: "⏮", callback_data: `prevSearch: 0 ${searchTerm}` },
-                { text: "⏭", callback_data: `nextSearch: ${lengthToReturn} ${searchTerm}` }
+                { text: "⏭", callback_data: `nextSearch: ${nextIndex} ${searchTerm}` }
             ]);
             let keyboard = { inline_keyboard };
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
@@ -411,6 +412,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             let searchResults = yield holySearch.search(searchTerm);
             stopIndex = stopIndex == 0 ? Math.min(searchResults.length, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f")) : stopIndex;
             let startIndex = stopIndex - __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f");
+            startIndex = startIndex < 0 ? 0 : startIndex;
             let lengthToReturn = Math.min(searchResults.length - startIndex, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f"));
             //keyboard
             let inline_keyboard = [];

@@ -55,14 +55,14 @@ export default class ProcessMessage{
                 chat_id: content.chatID,
                 text: "Hello "+firstName+"! I am the Holy Writ bot, your one-stop bot for your bible straight with Telegram."+this.#os.EOL+this.#os.EOL+
                 "To use me, simply send the bible verse in the format <code>book chapter:verse</code> or <code>book chapter verse</code> (e.g. <b><i>1 John 2:5</i></b> or <b><i>1 John 2 5</i></b>). Or better still, use the bot commands!"+this.#os.EOL+this.#os.EOL+
-                "To search for a scripture, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
+                "To search, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
                 parse_mode: "HTML"
             });
         }
         else if(content.text == "/s"){
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
-                text: "To search for a scripture, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
+                text: "To search, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
                 parse_mode: "HTML"
             });
         }
@@ -100,12 +100,13 @@ export default class ProcessMessage{
             let searchResults: SearchResult[] = await holySearch.search(searchTerm);
             
             let lengthToReturn = Math.min(searchResults.length, this.#maxSearchResultLength);
+            let nextIndex = lengthToReturn == searchResults.length?0:lengthToReturn;
 
             //keyboard
             let inline_keyboard = [];
             inline_keyboard.push([
                 { text: "⏮", callback_data: `prevSearch: 0 ${searchTerm}`},  
-                { text: "⏭", callback_data: `nextSearch: ${lengthToReturn} ${searchTerm}`}
+                { text: "⏭", callback_data: `nextSearch: ${nextIndex} ${searchTerm}`}
             ]);
             let keyboard = {inline_keyboard};
 
@@ -411,6 +412,7 @@ export default class ProcessMessage{
             
             stopIndex = stopIndex==0?Math.min(searchResults.length, this.#maxSearchResultLength):stopIndex;
             let startIndex = stopIndex - this.#maxSearchResultLength;
+            startIndex = startIndex<0?0:startIndex;
 
             let lengthToReturn = Math.min(searchResults.length-startIndex, this.#maxSearchResultLength);
 
