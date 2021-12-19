@@ -1,9 +1,9 @@
 export default class Bible{
-    #bible: any; #os = require("os");
+    bible: any; #os = require("os");
 
     constructor(){
         //load bible
-        this.#bible = require("../dataset/kjv.json");
+        this.bible = require("../dataset/kjv.json");
     }
 
     async verse(data: string): Promise<any>{
@@ -41,7 +41,7 @@ export default class Bible{
             let v = await this.#lookup(book, chapter, verse);
             if(v != "object"){
                 v = await this.#refineVerse(v);
-                let encodedVerse = `<b>${this.#bible[book].name} ${chapter}:${verse}</b>${this.#os.EOL}${this.#os.EOL}${v}`;
+                let encodedVerse = `<b>${this.bible[book].name} ${chapter}:${verse}</b>${this.#os.EOL}${this.#os.EOL}${v}`;
                 let keyboard = await this.#keyboard(book, chapter, verse);
                 return {encodedVerse, keyboard};
             }
@@ -57,7 +57,7 @@ export default class Bible{
      */
     async getChapterCount(book: string){
         console.log(book);
-        return this.#bible[book]['chapters'].length;
+        return this.bible[book]['chapters'].length;
     }
 
     /**
@@ -67,7 +67,7 @@ export default class Bible{
      * @returns Returns the number of verses in the specified chapter
      */
     async getVerseCount(book: string, chapter: number){
-        return this.#bible[book]['chapters'][chapter-1].length;
+        return this.bible[book]['chapters'][chapter-1].length;
     }
     
 
@@ -81,7 +81,7 @@ export default class Bible{
     async #lookup(book: string, chapter: number, verse: number): Promise<string>{
         book = book.toLowerCase();
         try{
-            let v = this.#bible[book]['chapters'][chapter-1][verse-1];
+            let v = this.bible[book]['chapters'][chapter-1][verse-1];
             return v;
         }catch(e: any){
             return typeof e;
@@ -98,8 +98,8 @@ export default class Bible{
      async lookupForReadOut(book: string, chapter: number, verse: number): Promise<string>{
         book = book.toLowerCase();
         try{
-            let v = this.#bible[book]['chapters'][chapter-1][verse-1];
-            return await this.#refineVerseReadOut(v);
+            let v = this.bible[book]['chapters'][chapter-1][verse-1];
+            return await this.refineVerseReadOut(v);
         }catch(e: any){
             return "null";
         }
@@ -112,7 +112,7 @@ export default class Bible{
      */
     async #refineVerse(verse: string): Promise<string>{
         verse = verse.replace(/(\{)((\w+\s*){1,})(\})/gi, "<i>$2</i>"); //Let {me go} now => Let <i>me go</i> now
-        verse = verse.replace(/(\{)(([a-z\.\:\;\?\(\)\&\,\s]){1,})(\})$/gi, ""); //Let me go now {me.: procast?} => Let me go now
+        verse = verse.replace(/((\{)(([a-z\.\:\;\?\(\)\&\,\s]){1,})(\})$){1,}/gi, ""); //Let me go now {me.: procast?} => Let me go now
         return verse;
     }
 
@@ -121,9 +121,9 @@ export default class Bible{
      * @param verse The verse
      * @returns Return verse in plain text without HTML tags
      */
-     async #refineVerseReadOut(verse: string): Promise<string>{
+    async refineVerseReadOut(verse: string): Promise<string>{
         verse = verse.replace(/(\{)((\w+\s*){1,})(\})/gi, "$2"); //Let {me go} now => Let me go now
-        verse = verse.replace(/(\{)(([a-z\.\:\;\?\(\)\&\,\s]){1,})(\})$/gi, ""); //Let me go now {me.: procast?} => Let me go now
+        verse = verse.replace(/((\{)(([a-z\.\:\;\?\(\)\&\,\s]){1,})(\})$){1,}/gi, ""); //Let me go now {me.: procast?} => Let me go now
         return verse;
     }
 
@@ -139,18 +139,18 @@ export default class Bible{
         if(verse == 1){
             let inline_keyboard = [];
             inline_keyboard.push([
-                { text: "🔈 Read Out", callback_data: `ro: ${this.#bible[book].abbreviation} ${chapter} ${verse}`}, 
-                { text: "⏭", callback_data: `next: ${this.#bible[book].abbreviation} ${chapter} ${verse+1}`}
+                { text: "🔈 Read Out", callback_data: `ro: ${this.bible[book].abbreviation} ${chapter} ${verse}`}, 
+                { text: "⏭", callback_data: `next: ${this.bible[book].abbreviation} ${chapter} ${verse+1}`}
             ]);
             let keyboard = {inline_keyboard};
             return keyboard;
         }
         //If last verse, next button should be omitted
-        else if(this.#bible[book]['chapters'][chapter-1][verse] == undefined){
+        else if(this.bible[book]['chapters'][chapter-1][verse] == undefined){
             let inline_keyboard = [];
             inline_keyboard.push([
-                { text: "⏮", callback_data: `prev: ${this.#bible[book].abbreviation} ${chapter} ${verse-1}`}, 
-                { text: "🔈 Read Out", callback_data: `ro: ${this.#bible[book].abbreviation} ${chapter} ${verse}` }
+                { text: "⏮", callback_data: `prev: ${this.bible[book].abbreviation} ${chapter} ${verse-1}`}, 
+                { text: "🔈 Read Out", callback_data: `ro: ${this.bible[book].abbreviation} ${chapter} ${verse}` }
             ]);
             let keyboard = {inline_keyboard};
             return keyboard;
@@ -159,9 +159,9 @@ export default class Bible{
         else{
             let inline_keyboard = [];
             inline_keyboard.push([
-                { text: "⏮", callback_data: `prev: ${this.#bible[book].abbreviation} ${chapter} ${verse-1}`}, 
-                { text: "🔈 Read Out", callback_data: `ro: ${this.#bible[book].abbreviation} ${chapter} ${verse}`}, 
-                { text: "⏭", callback_data: `next: ${this.#bible[book].abbreviation} ${chapter} ${verse+1}`}
+                { text: "⏮", callback_data: `prev: ${this.bible[book].abbreviation} ${chapter} ${verse-1}`}, 
+                { text: "🔈 Read Out", callback_data: `ro: ${this.bible[book].abbreviation} ${chapter} ${verse}`}, 
+                { text: "⏭", callback_data: `next: ${this.bible[book].abbreviation} ${chapter} ${verse+1}`}
             ]);
             let keyboard = {inline_keyboard};
             return keyboard;

@@ -3,10 +3,11 @@ import { InlineKeyboardMarkup } from "prosperly/dist/typealiases/inlineKeyboardM
 import { contentParam } from "./aliases/contentParam";
 import Bible from "./bible";
 import HolyPolly from "./holyPolly"
+import HolySearch, { SearchResult } from "./holySearch";
 
 export default class ProcessMessage{
     #update: any; #bot: Prosperly; #bible: Bible; #os = require("os");
-    #maxKeyBoardHeight = 5; #maxKeyBoardWidth = 5;
+    #maxKeyBoardHeight = 5; #maxKeyBoardWidth = 5; #maxSearchResultLength = 10;
 
     constructor(update: string, bot: Prosperly){
         this.#update = JSON.parse(update); 
@@ -53,7 +54,15 @@ export default class ProcessMessage{
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
                 text: "Hello "+firstName+"! I am the Holy Writ bot, your one-stop bot for your bible straight with Telegram."+this.#os.EOL+this.#os.EOL+
-                "To use me, simply send the bible verse in the format <code>book chapter:verse</code> or <code>book chapter verse</code> (e.g. <b><i>1 John 2:5</i></b> or <b><i>1 John 2 5</i></b>). Or better still, use the bot commands!",
+                "To use me, simply send the bible verse in the format <code>book chapter:verse</code> or <code>book chapter verse</code> (e.g. <b><i>1 John 2:5</i></b> or <b><i>1 John 2 5</i></b>). Or better still, use the bot commands!"+this.#os.EOL+this.#os.EOL+
+                "To search for a scripture, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
+                parse_mode: "HTML"
+            });
+        }
+        else if(content.text == "/s"){
+            await this.#bot.sendMessage({
+                chat_id: content.chatID,
+                text: "To search for a scripture, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
                 parse_mode: "HTML"
             });
         }
@@ -83,6 +92,30 @@ export default class ProcessMessage{
                 parse_mode: "HTML"
             });
         }
+        //Search
+        else if(content.text?.substr(0, 3) == "/s "){
+            let searchTerm = content.text?.substr(2).trim();
+
+            const holySearch: HolySearch = new HolySearch();
+            let searchResults: SearchResult[] = await holySearch.search(searchTerm);
+            
+            let lengthToReturn = Math.min(searchResults.length, this.#maxSearchResultLength);
+
+            //keyboard
+            let inline_keyboard = [];
+            inline_keyboard.push([
+                { text: "⏮", callback_data: `prevSearch: 0 ${searchTerm}`},  
+                { text: "⏭", callback_data: `nextSearch: ${lengthToReturn} ${searchTerm}`}
+            ]);
+            let keyboard = {inline_keyboard};
+
+            await this.#bot.sendMessage({
+                chat_id: content.chatID,
+                text: `<b>${searchTerm}</b>`+ this.#os.EOL + this.#os.EOL + await this.#searchResultFormating(searchResults, 0, lengthToReturn),
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
         else{
             if(content.text){
                 let v = await this.#bible.verse(content.text.toLowerCase());
@@ -103,6 +136,28 @@ export default class ProcessMessage{
                 }
             }
         }
+    }
+
+    /**
+     * Format search results into readable strings
+     * @param searchResults Search results
+     * @param start Index to start from
+     * @param length Length of result to return
+     * @returns Returns paged result
+     */
+    async #searchResultFormating(searchResults: SearchResult[], start: number, length: number): Promise<string>{
+        let result = `<i>${searchResults.length} result(s) </i>${this.#os.EOL+this.#os.EOL}`;
+
+        let i = start<0?0:start>searchResults.length?0:start;
+        length = length>(searchResults.length-start)?searchResults.length-start:length;
+
+        for(; i < length+start; i++){
+            let r = searchResults[i];
+            result += `${i+1}. <b>${r['book']} ${r['chapter']}:${r['verse']} - </b> <i>${r['text']}</i> ${this.#os.EOL+this.#os.EOL}`;
+        }
+
+        result += `<i>Result(s) ${start+1} to ${i} of ${searchResults.length}</i>`;
+        return result;
     }
 
     async #processInlineQuery(content: contentParam){
@@ -313,6 +368,66 @@ export default class ProcessMessage{
                 caption: `${book} ${chapter}:${verse}`+this.#os.EOL+this.#os.EOL+"@HolyWritBot",
                 parse_mode: "HTML",
                 reply_to_message_id: content.messageID
+            });
+        }
+
+        //Search results
+        //nextSearch: ${lengthToReturn} ${searchTerm}
+        if(query.substr(0, 11) == "nextSearch:"){
+            let startIndex = +query.split(" ")[1];
+            let searchTerm = query.substr(query.split(" ")[0].length + (startIndex+'').length+1).trim();
+
+            const holySearch: HolySearch = new HolySearch();
+            let searchResults: SearchResult[] = await holySearch.search(searchTerm);
+            
+            let lengthToReturn = Math.min(searchResults.length-startIndex, this.#maxSearchResultLength);
+
+            let nextIndex = startIndex+lengthToReturn>=searchResults.length?startIndex:startIndex+lengthToReturn;
+
+            //keyboard
+            let inline_keyboard = [];
+            inline_keyboard.push([
+                { text: "⏮", callback_data: `prevSearch: ${startIndex} ${searchTerm}`},  
+                { text: "⏭", callback_data: `nextSearch: ${nextIndex} ${searchTerm}`}
+            ]);
+            let keyboard = {inline_keyboard};
+
+            await this.#bot.editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${searchTerm}</b>`+ this.#os.EOL + this.#os.EOL + await this.#searchResultFormating(searchResults, startIndex, lengthToReturn),
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //prevSearch: ${index} ${searchTerm}
+        else if(query.substr(0, 11) == "prevSearch:"){
+            let stopIndex = +query.split(" ")[1];
+            
+            let searchTerm = query.substr(query.split(" ")[0].length + (stopIndex+'').length+1).trim();
+
+            const holySearch: HolySearch = new HolySearch();
+            let searchResults: SearchResult[] = await holySearch.search(searchTerm);
+            
+            stopIndex = stopIndex==0?Math.min(searchResults.length, this.#maxSearchResultLength):stopIndex;
+            let startIndex = stopIndex - this.#maxSearchResultLength;
+
+            let lengthToReturn = Math.min(searchResults.length-startIndex, this.#maxSearchResultLength);
+
+            //keyboard
+            let inline_keyboard = [];
+            inline_keyboard.push([
+                { text: "⏮", callback_data: `prevSearch: ${startIndex} ${searchTerm}`},  
+                { text: "⏭", callback_data: `nextSearch: ${startIndex+lengthToReturn} ${searchTerm}`}
+            ]);
+            let keyboard = {inline_keyboard};
+
+            await this.#bot.editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${searchTerm}</b>`+ this.#os.EOL + this.#os.EOL + await this.#searchResultFormating(searchResults, startIndex, lengthToReturn),
+                parse_mode: "HTML",
+                reply_markup: keyboard
             });
         }
 

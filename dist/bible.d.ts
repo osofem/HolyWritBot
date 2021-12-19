@@ -1,5 +1,6 @@
 export default class Bible {
     #private;
+    bible: any;
     constructor();
     verse(data: string): Promise<any>;
     /**
@@ -23,6 +24,12 @@ export default class Bible {
      * @returns Returns clean verse without tags
      */
     lookupForReadOut(book: string, chapter: number, verse: number): Promise<string>;
+    /**
+     * Remove all curly brackets for readout without HTML tags
+     * @param verse The verse
+     * @returns Return verse in plain text without HTML tags
+     */
+    refineVerseReadOut(verse: string): Promise<string>;
     /**
      * Map abbravition to book name
      * @param abbreviation Abbraviation to map (e.g. gn)

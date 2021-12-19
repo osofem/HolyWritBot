@@ -8,26 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
-    if (kind === "m") throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
-};
 var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
     if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _Bible_instances, _Bible_bible, _Bible_os, _Bible_lookup, _Bible_refineVerse, _Bible_refineVerseReadOut, _Bible_keyboard;
+var _Bible_instances, _Bible_os, _Bible_lookup, _Bible_refineVerse, _Bible_keyboard;
 Object.defineProperty(exports, "__esModule", { value: true });
 class Bible {
     constructor() {
         _Bible_instances.add(this);
-        _Bible_bible.set(this, void 0);
         _Bible_os.set(this, require("os"));
         //load bible
-        __classPrivateFieldSet(this, _Bible_bible, require("../dataset/kjv.json"), "f");
+        this.bible = require("../dataset/kjv.json");
     }
     verse(data) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -65,7 +58,7 @@ class Bible {
                 let v = yield __classPrivateFieldGet(this, _Bible_instances, "m", _Bible_lookup).call(this, book, chapter, verse);
                 if (v != "object") {
                     v = yield __classPrivateFieldGet(this, _Bible_instances, "m", _Bible_refineVerse).call(this, v);
-                    let encodedVerse = `<b>${__classPrivateFieldGet(this, _Bible_bible, "f")[book].name} ${chapter}:${verse}</b>${__classPrivateFieldGet(this, _Bible_os, "f").EOL}${__classPrivateFieldGet(this, _Bible_os, "f").EOL}${v}`;
+                    let encodedVerse = `<b>${this.bible[book].name} ${chapter}:${verse}</b>${__classPrivateFieldGet(this, _Bible_os, "f").EOL}${__classPrivateFieldGet(this, _Bible_os, "f").EOL}${v}`;
                     let keyboard = yield __classPrivateFieldGet(this, _Bible_instances, "m", _Bible_keyboard).call(this, book, chapter, verse);
                     return { encodedVerse, keyboard };
                 }
@@ -81,7 +74,7 @@ class Bible {
     getChapterCount(book) {
         return __awaiter(this, void 0, void 0, function* () {
             console.log(book);
-            return __classPrivateFieldGet(this, _Bible_bible, "f")[book]['chapters'].length;
+            return this.bible[book]['chapters'].length;
         });
     }
     /**
@@ -92,7 +85,7 @@ class Bible {
      */
     getVerseCount(book, chapter) {
         return __awaiter(this, void 0, void 0, function* () {
-            return __classPrivateFieldGet(this, _Bible_bible, "f")[book]['chapters'][chapter - 1].length;
+            return this.bible[book]['chapters'][chapter - 1].length;
         });
     }
     /**
@@ -106,12 +99,24 @@ class Bible {
         return __awaiter(this, void 0, void 0, function* () {
             book = book.toLowerCase();
             try {
-                let v = __classPrivateFieldGet(this, _Bible_bible, "f")[book]['chapters'][chapter - 1][verse - 1];
-                return yield __classPrivateFieldGet(this, _Bible_instances, "m", _Bible_refineVerseReadOut).call(this, v);
+                let v = this.bible[book]['chapters'][chapter - 1][verse - 1];
+                return yield this.refineVerseReadOut(v);
             }
             catch (e) {
                 return "null";
             }
+        });
+    }
+    /**
+     * Remove all curly brackets for readout without HTML tags
+     * @param verse The verse
+     * @returns Return verse in plain text without HTML tags
+     */
+    refineVerseReadOut(verse) {
+        return __awaiter(this, void 0, void 0, function* () {
+            verse = verse.replace(/(\{)((\w+\s*){1,})(\})/gi, "$2"); //Let {me go} now => Let me go now
+            verse = verse.replace(/((\{)(([a-z\.\:\;\?\(\)\&\,\s]){1,})(\})$){1,}/gi, ""); //Let me go now {me.: procast?} => Let me go now
+            return verse;
         });
     }
     /**
@@ -192,11 +197,11 @@ class Bible {
     }
 }
 exports.default = Bible;
-_Bible_bible = new WeakMap(), _Bible_os = new WeakMap(), _Bible_instances = new WeakSet(), _Bible_lookup = function _Bible_lookup(book, chapter, verse) {
+_Bible_os = new WeakMap(), _Bible_instances = new WeakSet(), _Bible_lookup = function _Bible_lookup(book, chapter, verse) {
     return __awaiter(this, void 0, void 0, function* () {
         book = book.toLowerCase();
         try {
-            let v = __classPrivateFieldGet(this, _Bible_bible, "f")[book]['chapters'][chapter - 1][verse - 1];
+            let v = this.bible[book]['chapters'][chapter - 1][verse - 1];
             return v;
         }
         catch (e) {
@@ -206,13 +211,7 @@ _Bible_bible = new WeakMap(), _Bible_os = new WeakMap(), _Bible_instances = new 
 }, _Bible_refineVerse = function _Bible_refineVerse(verse) {
     return __awaiter(this, void 0, void 0, function* () {
         verse = verse.replace(/(\{)((\w+\s*){1,})(\})/gi, "<i>$2</i>"); //Let {me go} now => Let <i>me go</i> now
-        verse = verse.replace(/(\{)(([a-z\.\:\;\?\(\)\&\,\s]){1,})(\})$/gi, ""); //Let me go now {me.: procast?} => Let me go now
-        return verse;
-    });
-}, _Bible_refineVerseReadOut = function _Bible_refineVerseReadOut(verse) {
-    return __awaiter(this, void 0, void 0, function* () {
-        verse = verse.replace(/(\{)((\w+\s*){1,})(\})/gi, "$2"); //Let {me go} now => Let me go now
-        verse = verse.replace(/(\{)(([a-z\.\:\;\?\(\)\&\,\s]){1,})(\})$/gi, ""); //Let me go now {me.: procast?} => Let me go now
+        verse = verse.replace(/((\{)(([a-z\.\:\;\?\(\)\&\,\s]){1,})(\})$){1,}/gi, ""); //Let me go now {me.: procast?} => Let me go now
         return verse;
     });
 }, _Bible_keyboard = function _Bible_keyboard(book, chapter, verse) {
@@ -221,18 +220,18 @@ _Bible_bible = new WeakMap(), _Bible_os = new WeakMap(), _Bible_instances = new 
         if (verse == 1) {
             let inline_keyboard = [];
             inline_keyboard.push([
-                { text: "🔈 Read Out", callback_data: `ro: ${__classPrivateFieldGet(this, _Bible_bible, "f")[book].abbreviation} ${chapter} ${verse}` },
-                { text: "⏭", callback_data: `next: ${__classPrivateFieldGet(this, _Bible_bible, "f")[book].abbreviation} ${chapter} ${verse + 1}` }
+                { text: "🔈 Read Out", callback_data: `ro: ${this.bible[book].abbreviation} ${chapter} ${verse}` },
+                { text: "⏭", callback_data: `next: ${this.bible[book].abbreviation} ${chapter} ${verse + 1}` }
             ]);
             let keyboard = { inline_keyboard };
             return keyboard;
         }
         //If last verse, next button should be omitted
-        else if (__classPrivateFieldGet(this, _Bible_bible, "f")[book]['chapters'][chapter - 1][verse] == undefined) {
+        else if (this.bible[book]['chapters'][chapter - 1][verse] == undefined) {
             let inline_keyboard = [];
             inline_keyboard.push([
-                { text: "⏮", callback_data: `prev: ${__classPrivateFieldGet(this, _Bible_bible, "f")[book].abbreviation} ${chapter} ${verse - 1}` },
-                { text: "🔈 Read Out", callback_data: `ro: ${__classPrivateFieldGet(this, _Bible_bible, "f")[book].abbreviation} ${chapter} ${verse}` }
+                { text: "⏮", callback_data: `prev: ${this.bible[book].abbreviation} ${chapter} ${verse - 1}` },
+                { text: "🔈 Read Out", callback_data: `ro: ${this.bible[book].abbreviation} ${chapter} ${verse}` }
             ]);
             let keyboard = { inline_keyboard };
             return keyboard;
@@ -241,9 +240,9 @@ _Bible_bible = new WeakMap(), _Bible_os = new WeakMap(), _Bible_instances = new 
         else {
             let inline_keyboard = [];
             inline_keyboard.push([
-                { text: "⏮", callback_data: `prev: ${__classPrivateFieldGet(this, _Bible_bible, "f")[book].abbreviation} ${chapter} ${verse - 1}` },
-                { text: "🔈 Read Out", callback_data: `ro: ${__classPrivateFieldGet(this, _Bible_bible, "f")[book].abbreviation} ${chapter} ${verse}` },
-                { text: "⏭", callback_data: `next: ${__classPrivateFieldGet(this, _Bible_bible, "f")[book].abbreviation} ${chapter} ${verse + 1}` }
+                { text: "⏮", callback_data: `prev: ${this.bible[book].abbreviation} ${chapter} ${verse - 1}` },
+                { text: "🔈 Read Out", callback_data: `ro: ${this.bible[book].abbreviation} ${chapter} ${verse}` },
+                { text: "⏭", callback_data: `next: ${this.bible[book].abbreviation} ${chapter} ${verse + 1}` }
             ]);
             let keyboard = { inline_keyboard };
             return keyboard;
