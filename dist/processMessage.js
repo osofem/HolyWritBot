@@ -79,7 +79,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                 chat_id: content.chatID,
                 text: "Hello " + firstName + "! I am the Holy Writ bot, your one-stop bot for your bible straight with Telegram." + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL +
-                    "To use me, simply send the bible verse in the format <b><code>book chapter:verse</code></b> (e.g. <b><i>1 John 2:5</i></b>). Or better still, use the bot commands!",
+                    "To use me, simply send the bible verse in the format <code>book chapter:verse</code> or <code>book chapter verse</code> (e.g. <b><i>1 John 2:5</i></b> or <b><i>1 John 2 5</i></b>). Or better still, use the bot commands!",
                 parse_mode: "HTML"
             });
         }
@@ -112,19 +112,19 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         else {
             if (content.text) {
                 let v = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").verse(content.text.toLowerCase());
-                if (v.encodedVerse != undefined) {
+                if (v == undefined) {
+                    yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
+                        chat_id: content.chatID,
+                        text: "I could not find the verse you are looking for. Please ensure your spellings are correct and in the format <code>book chapter:verse</code> (e.g. <i>1 John 2:5</i>). Or better still, use the bot commands!",
+                        parse_mode: "HTML"
+                    });
+                }
+                else if (typeof v.encodedVerse != "undefined") {
                     yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                         chat_id: content.chatID,
                         text: v.encodedVerse,
                         parse_mode: "HTML",
                         reply_markup: v.keyboard
-                    });
-                }
-                else {
-                    yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
-                        chat_id: content.chatID,
-                        text: "I could not find the verse you are looking for. Please ensure your spellings are correct and in the format <code>book chapter:verse</code> (e.g. <i>1 John 2:5</i>). Or better still, use the bot commands!",
-                        parse_mode: "HTML"
                     });
                 }
             }

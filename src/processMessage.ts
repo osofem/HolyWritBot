@@ -53,7 +53,7 @@ export default class ProcessMessage{
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
                 text: "Hello "+firstName+"! I am the Holy Writ bot, your one-stop bot for your bible straight with Telegram."+this.#os.EOL+this.#os.EOL+
-                "To use me, simply send the bible verse in the format <b><code>book chapter:verse</code></b> (e.g. <b><i>1 John 2:5</i></b>). Or better still, use the bot commands!",
+                "To use me, simply send the bible verse in the format <code>book chapter:verse</code> or <code>book chapter verse</code> (e.g. <b><i>1 John 2:5</i></b> or <b><i>1 John 2 5</i></b>). Or better still, use the bot commands!",
                 parse_mode: "HTML"
             });
         }
@@ -86,7 +86,14 @@ export default class ProcessMessage{
         else{
             if(content.text){
                 let v = await this.#bible.verse(content.text.toLowerCase());
-                if(v.encodedVerse != undefined){
+                if(v == undefined){
+                    await this.#bot.sendMessage({
+                        chat_id: content.chatID,
+                        text: "I could not find the verse you are looking for. Please ensure your spellings are correct and in the format <code>book chapter:verse</code> (e.g. <i>1 John 2:5</i>). Or better still, use the bot commands!",
+                        parse_mode: "HTML"
+                    });
+                }
+                else if(typeof v.encodedVerse != "undefined"){
                     await this.#bot.sendMessage({
                         chat_id: content.chatID,
                         text: v.encodedVerse,
@@ -94,16 +101,7 @@ export default class ProcessMessage{
                         reply_markup: v.keyboard
                     });
                 }
-                else{
-                    await this.#bot.sendMessage({
-                        chat_id: content.chatID,
-                        text: "I could not find the verse you are looking for. Please ensure your spellings are correct and in the format <code>book chapter:verse</code> (e.g. <i>1 John 2:5</i>). Or better still, use the bot commands!",
-                        parse_mode: "HTML"
-                    });
-                }
-                
             }
-            
         }
     }
 

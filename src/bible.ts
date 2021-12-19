@@ -7,14 +7,29 @@ export default class Bible{
     }
 
     async verse(data: string): Promise<any>{
-        //data should be in the format [book chapter:verse]
+        //data should be in the format [book chapter:verse] or [book chapter verse]
         let book, chapter, verse;
         let vdata = data.replace(/\s+/gi, " ").split(" ");
-        if(vdata.length == 3){
-            //e.g. 1 chronicles 3:4
+        if(vdata.length == 4){
+            //e.g. 1 chronicles 3 4
             book = `${vdata[0]} ${vdata[1]}`;
-            chapter = +vdata[2].split(":")[0];
-            verse = +vdata[2].split(":")[1];
+            chapter = +vdata[2];
+            verse = +vdata[3];
+        }
+        else if(vdata.length == 3){
+            //e.g. 1 chronicles 3:4 or John 3 16
+            if(vdata[2].includes(":")){
+                //e.g. 1 chronicles 3:4
+                book = `${vdata[0]} ${vdata[1]}`;
+                chapter = +vdata[2].split(":")[0];
+                verse = +vdata[2].split(":")[1];
+            }
+            else{
+                //e.g. John 3 16
+                book = vdata[0];
+                chapter = +vdata[1];
+                verse = +vdata[2];
+            }
         }
         else if(vdata.length == 2){
             //e.g. john 3:16
@@ -30,10 +45,8 @@ export default class Bible{
                 let keyboard = await this.#keyboard(book, chapter, verse);
                 return {encodedVerse, keyboard};
             }
-            else{
-                return {};
-            }
         }
+        return undefined;
     }
 
 
