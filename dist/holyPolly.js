@@ -46,7 +46,8 @@ class HolyPolly {
                 'Text': text,
                 'OutputFormat': 'mp3',
                 'VoiceId': 'Kendra',
-                'Engine': 'standard'
+                //'Engine': 'standard',
+                'Engine': 'neural'
             };
             let data = yield __classPrivateFieldGet(this, _HolyPolly_Polly, "f").synthesizeSpeech(params).promise();
             let promise;

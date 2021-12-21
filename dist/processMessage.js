@@ -22,24 +22,27 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _ProcessMessage_instances, _ProcessMessage_update, _ProcessMessage_bot, _ProcessMessage_bible, _ProcessMessage_os, _ProcessMessage_maxKeyBoardHeight, _ProcessMessage_maxKeyBoardWidth, _ProcessMessage_maxSearchResultLength, _ProcessMessage_processMessage, _ProcessMessage_searchResultFormating, _ProcessMessage_processInlineQuery, _ProcessMessage_processCallbackQuery, _ProcessMessage_getVerseKeyboard, _ProcessMessage_getChapterKeyboard, _ProcessMessage_oldTestamentKeyboard, _ProcessMessage_newTestamentKeyboard;
+var _ProcessMessage_instances, _ProcessMessage_update, _ProcessMessage_bot, _ProcessMessage_bible, _ProcessMessage_os, _ProcessMessage_db, _ProcessMessage_maxKeyBoardHeight, _ProcessMessage_maxKeyBoardWidth, _ProcessMessage_maxSearchResultLength, _ProcessMessage_processMessage, _ProcessMessage_searchResultFormating, _ProcessMessage_processInlineQuery, _ProcessMessage_processCallbackQuery, _ProcessMessage_updateOrRegisterUser, _ProcessMessage_getVerseKeyboard, _ProcessMessage_getChapterKeyboard, _ProcessMessage_oldTestamentKeyboard, _ProcessMessage_newTestamentKeyboard;
 Object.defineProperty(exports, "__esModule", { value: true });
 const bible_1 = __importDefault(require("./bible"));
 const holyPolly_1 = __importDefault(require("./holyPolly"));
 const holySearch_1 = __importDefault(require("./holySearch"));
+const DB_1 = __importDefault(require("./DB"));
 class ProcessMessage {
-    constructor(update, bot) {
+    constructor(update, content) {
         _ProcessMessage_instances.add(this);
         _ProcessMessage_update.set(this, void 0);
         _ProcessMessage_bot.set(this, void 0);
         _ProcessMessage_bible.set(this, void 0);
         _ProcessMessage_os.set(this, require("os"));
+        _ProcessMessage_db.set(this, void 0);
         _ProcessMessage_maxKeyBoardHeight.set(this, 5);
         _ProcessMessage_maxKeyBoardWidth.set(this, 5);
         _ProcessMessage_maxSearchResultLength.set(this, 10);
         __classPrivateFieldSet(this, _ProcessMessage_update, JSON.parse(update), "f");
-        __classPrivateFieldSet(this, _ProcessMessage_bot, bot, "f");
+        __classPrivateFieldSet(this, _ProcessMessage_bot, content.bot, "f");
         __classPrivateFieldSet(this, _ProcessMessage_bible, new bible_1.default(), "f");
+        __classPrivateFieldSet(this, _ProcessMessage_db, new DB_1.default(content.m3oKey), "f");
     }
     /**
      * Execute the current update
@@ -74,20 +77,25 @@ class ProcessMessage {
     }
 }
 exports.default = ProcessMessage;
-_ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _ProcessMessage_bible = new WeakMap(), _ProcessMessage_os = new WeakMap(), _ProcessMessage_maxKeyBoardHeight = new WeakMap(), _ProcessMessage_maxKeyBoardWidth = new WeakMap(), _ProcessMessage_maxSearchResultLength = new WeakMap(), _ProcessMessage_instances = new WeakSet(), _ProcessMessage_processMessage = function _ProcessMessage_processMessage(content) {
+_ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _ProcessMessage_bible = new WeakMap(), _ProcessMessage_os = new WeakMap(), _ProcessMessage_db = new WeakMap(), _ProcessMessage_maxKeyBoardHeight = new WeakMap(), _ProcessMessage_maxKeyBoardWidth = new WeakMap(), _ProcessMessage_maxSearchResultLength = new WeakMap(), _ProcessMessage_instances = new WeakSet(), _ProcessMessage_processMessage = function _ProcessMessage_processMessage(content) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         if (content.text == "/start") {
             let firstName = JSON.parse(yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").getChat(content.chatID))['result']['first_name'];
+            //send texting status
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendChatAction({ chat_id: content.chatID, action: 'typing' });
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                 chat_id: content.chatID,
                 text: "Hello " + firstName + "! I am the Holy Writ bot, your one-stop bot for your bible straight with Telegram." + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL +
                     "To use me, simply send the bible verse in the format <code>book chapter:verse</code> or <code>book chapter verse</code> (e.g. <b><i>1 John 2:5</i></b> or <b><i>1 John 2 5</i></b>). Or better still, use the bot commands!" + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL +
-                    "To search, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
+                    "To search, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)" + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL +
+                    `<b>Channel:</b> @HolyWritDiscuss`,
                 parse_mode: "HTML"
             });
         }
         else if (content.text == "/s") {
+            //send texting status
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendChatAction({ chat_id: content.chatID, action: 'typing' });
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                 chat_id: content.chatID,
                 text: "To search, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
@@ -96,6 +104,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         }
         else if (content.text == "/oldtestament") {
             let keyboard = __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_oldTestamentKeyboard).call(this);
+            //send texting status
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendChatAction({ chat_id: content.chatID, action: 'typing' });
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                 chat_id: content.chatID,
                 text: "Old Testament ⬇️",
@@ -105,6 +115,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         }
         else if (content.text == "/newtestament") {
             let keyboard = __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_newTestamentKeyboard).call(this);
+            //send texting status
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendChatAction({ chat_id: content.chatID, action: 'typing' });
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                 chat_id: content.chatID,
                 text: "New Testament ⬇️",
@@ -113,10 +125,21 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         else if (content.text == "/stat") {
+            let usersCount = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getTotalUsers();
+            let verseCount = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getTotalVerseCount();
+            let readoutCount = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getTotalReadoutCount();
+            let searchCount = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getTotalSearchCount();
+            let stat = "📊 <b>Bot Statistics</b>" + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL;
+            stat += `<b>Users:</b> <i>${usersCount.count} users ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Verses:</b> <i>${verseCount.count} verses served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Read Out:</b> <i>${readoutCount.count} readouts served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Searches:</b> <i>${searchCount.count} searches served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Channel:</b> @HolyWritDiscuss`;
+            //send texting status
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendChatAction({ chat_id: content.chatID, action: 'typing' });
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                 chat_id: content.chatID,
-                text: "📊 <b>Bot Statistics</b>" + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL +
-                    "<i>Coming soon!</i>",
+                text: stat,
                 parse_mode: "HTML"
             });
         }
@@ -134,6 +157,10 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 { text: "⏭", callback_data: `nextSearch: ${nextIndex} ${searchTerm}` }
             ]);
             let keyboard = { inline_keyboard };
+            //send texting status
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendChatAction({ chat_id: content.chatID, action: 'typing' });
+            //Save search request
+            yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").setSearch(searchTerm);
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                 chat_id: content.chatID,
                 text: `<b>${searchTerm}</b>` + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + (yield __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_searchResultFormating).call(this, searchResults, 0, lengthToReturn)),
@@ -152,6 +179,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                     });
                 }
                 else if (typeof v.encodedVerse != "undefined") {
+                    //Save verse request
+                    yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").setVerse(content.text.toLowerCase());
                     yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                         chat_id: content.chatID,
                         text: v.encodedVerse,
@@ -161,6 +190,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 }
             }
         }
+        //Update or register user
+        yield __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_updateOrRegisterUser).call(this, content.chatID.toString());
     });
 }, _ProcessMessage_searchResultFormating = function _ProcessMessage_searchResultFormating(searchResults, start, length) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -176,6 +207,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
     });
 }, _ProcessMessage_processInlineQuery = function _ProcessMessage_processInlineQuery(content) {
     return __awaiter(this, void 0, void 0, function* () {
+        //Update or register user
+        yield __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_updateOrRegisterUser).call(this, content.chatID.toString());
     });
 }, _ProcessMessage_processCallbackQuery = function _ProcessMessage_processCallbackQuery(content) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -188,6 +221,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             let verse = +query.split(" ")[3];
             let v = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").verse(`${book} ${chapter}:${verse}`);
             if (v.encodedVerse != undefined) {
+                //Save verse request
+                yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").setVerse(`${book} ${chapter}:${verse}`);
                 yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
                     chat_id: content.chatID,
                     message_id: content.messageID,
@@ -205,6 +240,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             let verse = +query.split(" ")[3];
             let v = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").verse(`${book} ${chapter}:${verse}`);
             if (v.encodedVerse != undefined) {
+                //Save verse request
+                yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").setVerse(`${book} ${chapter}:${verse}`);
                 yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
                     chat_id: content.chatID,
                     message_id: content.messageID,
@@ -295,6 +332,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             let verse = +query.split(" ")[3];
             let v = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").verse(`${book} ${chapter}:${verse}`);
             if (v.encodedVerse != undefined) {
+                //Save verse request
+                yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").setVerse(`${book} ${chapter}:${verse}`);
                 yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
                     chat_id: content.chatID,
                     message_id: content.messageID,
@@ -372,6 +411,10 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             let verse = +query.split(" ")[3];
             let text = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").lookupForReadOut(book, chapter, verse);
             let filename = yield holyPolly.speak(text, `${book} ${chapter}:${verse}`);
+            //send texting status
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendChatAction({ chat_id: content.chatID, action: 'record_voice' });
+            //Save readout request
+            yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").setReadout(`${book} ${chapter}:${verse}`);
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendAudio({
                 chat_id: content.chatID,
                 audio: filename,
@@ -429,11 +472,28 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 reply_markup: keyboard
             });
         }
+        //Update or register user
+        yield __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_updateOrRegisterUser).call(this, content.chatID.toString());
         //Answer the query
         yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").answerCallbackQuery({
             callback_query_id: content.queryID ? content.queryID : "0",
             text: "Request Answered!"
         });
+    });
+}, _ProcessMessage_updateOrRegisterUser = function _ProcessMessage_updateOrRegisterUser(userID) {
+    return __awaiter(this, void 0, void 0, function* () {
+        //check if user exists
+        let user = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getUser(userID);
+        if (user.records && user.records.length > 0) {
+            //user exist, update lastseen
+            yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").updateUser(userID, {
+                lastAccess: +new Date()
+            });
+        }
+        else {
+            //user does not exist, register user
+            yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").createUser(userID);
+        }
     });
 }, _ProcessMessage_getVerseKeyboard = function _ProcessMessage_getVerseKeyboard(bookAbbr, chapter, verseCount, start = 0) {
     let inline_keyboard = [];

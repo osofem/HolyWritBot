@@ -22,7 +22,8 @@ export default class HolyPolly{
             'Text': text,
             'OutputFormat': 'mp3',
             'VoiceId': 'Kendra',
-            'Engine': 'standard'
+            //'Engine': 'standard',
+            'Engine': 'neural'
         }
 
         let data = await this.#Polly.synthesizeSpeech(params).promise();

@@ -4,15 +4,17 @@ import { contentParam } from "./aliases/contentParam";
 import Bible from "./bible";
 import HolyPolly from "./holyPolly"
 import HolySearch, { SearchResult } from "./holySearch";
+import DB from "./DB";
 
 export default class ProcessMessage{
-    #update: any; #bot: Prosperly; #bible: Bible; #os = require("os");
+    #update: any; #bot: Prosperly; #bible: Bible; #os = require("os"); #db: DB;
     #maxKeyBoardHeight = 5; #maxKeyBoardWidth = 5; #maxSearchResultLength = 10;
 
-    constructor(update: string, bot: Prosperly){
+    constructor(update: string, content: {bot: Prosperly; m3oKey: string}){
         this.#update = JSON.parse(update); 
-        this.#bot = bot;
+        this.#bot = content.bot;
         this.#bible = new Bible();
+        this.#db = new DB(content.m3oKey);
     }
 
     /**
@@ -51,15 +53,21 @@ export default class ProcessMessage{
     async #processMessage(content: contentParam){
         if(content.text == "/start"){
             let firstName = JSON.parse(await this.#bot.getChat(content.chatID))['result']['first_name'];
+            //send texting status
+            await this.#bot.sendChatAction({ chat_id: content.chatID, action: 'typing' });
+            
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
                 text: "Hello "+firstName+"! I am the Holy Writ bot, your one-stop bot for your bible straight with Telegram."+this.#os.EOL+this.#os.EOL+
                 "To use me, simply send the bible verse in the format <code>book chapter:verse</code> or <code>book chapter verse</code> (e.g. <b><i>1 John 2:5</i></b> or <b><i>1 John 2 5</i></b>). Or better still, use the bot commands!"+this.#os.EOL+this.#os.EOL+
-                "To search, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
+                "To search, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)"+this.#os.EOL+this.#os.EOL+
+                `<b>Channel:</b> @HolyWritDiscuss`,
                 parse_mode: "HTML"
             });
         }
         else if(content.text == "/s"){
+            //send texting status
+            await this.#bot.sendChatAction({ chat_id: content.chatID, action: 'typing' });
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
                 text: "To search, type your search term prefixed by /s into the bot <code>/s your search</code> (e.g. <b><i>/s Jesus said</i></b>)",
@@ -68,6 +76,8 @@ export default class ProcessMessage{
         }
         else if(content.text == "/oldtestament"){
             let keyboard: InlineKeyboardMarkup = this.#oldTestamentKeyboard();
+            //send texting status
+            await this.#bot.sendChatAction({ chat_id: content.chatID, action: 'typing' });
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
                 text: "Old Testament ⬇️",
@@ -77,6 +87,8 @@ export default class ProcessMessage{
         }
         else if(content.text == "/newtestament"){
             let keyboard: InlineKeyboardMarkup = this.#newTestamentKeyboard();
+            //send texting status
+            await this.#bot.sendChatAction({ chat_id: content.chatID, action: 'typing' });
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
                 text: "New Testament ⬇️",
@@ -85,10 +97,24 @@ export default class ProcessMessage{
             });
         }
         else if(content.text == "/stat"){
+            let usersCount = await this.#db.getTotalUsers();
+            let verseCount = await this.#db.getTotalVerseCount();
+            let readoutCount = await this.#db.getTotalReadoutCount();
+            let searchCount = await this.#db.getTotalSearchCount();
+            
+            let stat = "📊 <b>Bot Statistics</b>"+this.#os.EOL+this.#os.EOL;
+            stat += `<b>Users:</b> <i>${usersCount.count} users ${this.#os.EOL}</i>`;
+            stat += `<b>Verses:</b> <i>${verseCount.count} verses served ${this.#os.EOL}</i>`;
+            stat += `<b>Read Out:</b> <i>${readoutCount.count} readouts served ${this.#os.EOL}</i>`;
+            stat += `<b>Searches:</b> <i>${searchCount.count} searches served ${this.#os.EOL}${this.#os.EOL}</i>`;
+            stat += `<b>Channel:</b> @HolyWritDiscuss`;
+            
+            //send texting status
+            await this.#bot.sendChatAction({ chat_id: content.chatID, action: 'typing' });
+
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
-                text: "📊 <b>Bot Statistics</b>"+this.#os.EOL+this.#os.EOL+
-                "<i>Coming soon!</i>",
+                text: stat,
                 parse_mode: "HTML"
             });
         }
@@ -110,6 +136,12 @@ export default class ProcessMessage{
             ]);
             let keyboard = {inline_keyboard};
 
+            //send texting status
+            await this.#bot.sendChatAction({ chat_id: content.chatID, action: 'typing' });
+
+            //Save search request
+            await this.#db.setSearch(searchTerm);
+
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
                 text: `<b>${searchTerm}</b>`+ this.#os.EOL + this.#os.EOL + await this.#searchResultFormating(searchResults, 0, lengthToReturn),
@@ -128,6 +160,9 @@ export default class ProcessMessage{
                     });
                 }
                 else if(typeof v.encodedVerse != "undefined"){
+                    //Save verse request
+                    await this.#db.setVerse(content.text.toLowerCase());
+
                     await this.#bot.sendMessage({
                         chat_id: content.chatID,
                         text: v.encodedVerse,
@@ -137,6 +172,8 @@ export default class ProcessMessage{
                 }
             }
         }
+        //Update or register user
+        await this.#updateOrRegisterUser(content.chatID.toString());
     }
 
     /**
@@ -162,7 +199,8 @@ export default class ProcessMessage{
     }
 
     async #processInlineQuery(content: contentParam){
-
+        //Update or register user
+        await this.#updateOrRegisterUser(content.chatID.toString());
     }
 
     async #processCallbackQuery(content: contentParam){
@@ -175,6 +213,9 @@ export default class ProcessMessage{
             let verse = +query.split(" ")[3];
             let v = await this.#bible.verse(`${book} ${chapter}:${verse}`);
             if(v.encodedVerse != undefined){
+                //Save verse request
+                await this.#db.setVerse(`${book} ${chapter}:${verse}`);
+
                 await this.#bot.editMessageText({
                     chat_id: content.chatID,
                     message_id: content.messageID,
@@ -192,6 +233,9 @@ export default class ProcessMessage{
             let verse = +query.split(" ")[3];
             let v = await this.#bible.verse(`${book} ${chapter}:${verse}`);
             if(v.encodedVerse != undefined){
+                //Save verse request
+                await this.#db.setVerse(`${book} ${chapter}:${verse}`);
+
                 await this.#bot.editMessageText({
                     chat_id: content.chatID,
                     message_id: content.messageID,
@@ -282,6 +326,9 @@ export default class ProcessMessage{
             let verse = +query.split(" ")[3];
             let v = await this.#bible.verse(`${book} ${chapter}:${verse}`);
             if(v.encodedVerse != undefined){
+                //Save verse request
+                await this.#db.setVerse(`${book} ${chapter}:${verse}`);
+
                 await this.#bot.editMessageText({
                     chat_id: content.chatID,
                     message_id: content.messageID,
@@ -363,6 +410,12 @@ export default class ProcessMessage{
             let text = await this.#bible.lookupForReadOut(book, chapter, verse);
 
             let filename = await holyPolly.speak(text, `${book} ${chapter}:${verse}`);
+            //send texting status
+            await this.#bot.sendChatAction({ chat_id: content.chatID, action: 'record_voice' });
+           
+            //Save readout request
+            await this.#db.setReadout(`${book} ${chapter}:${verse}`);
+
             await this.#bot.sendAudio({
                 chat_id: content.chatID,
                 audio: filename,
@@ -433,6 +486,9 @@ export default class ProcessMessage{
             });
         }
 
+        //Update or register user
+        await this.#updateOrRegisterUser(content.chatID.toString());
+
         //Answer the query
         await this.#bot.answerCallbackQuery({
             callback_query_id: content.queryID?content.queryID:"0",
@@ -440,6 +496,24 @@ export default class ProcessMessage{
         });
     }
 
+    /**
+     * Updates or Register a user info
+     * @param userID user ID to register or update
+     */
+     async #updateOrRegisterUser(userID: string){
+        //check if user exists
+        let user = await this.#db.getUser(userID);
+        if(user.records && user.records.length > 0){
+            //user exist, update lastseen
+            await this.#db.updateUser(userID, {
+                lastAccess: +new Date()
+            });
+        }
+        else{
+            //user does not exist, register user
+            await this.#db.createUser(userID);
+        }
+    }
 
     #getVerseKeyboard(bookAbbr: string, chapter: number, verseCount: number,  start: number = 0): InlineKeyboardMarkup{
         let inline_keyboard = [];
