@@ -38,14 +38,18 @@ class HolyPolly {
     /**
      * Turn text to speech
      * @param text Text to synthesize
+     * @param filename Name to give the output mp3 file
+     * @param voiceID Voice ID to use for the read out
      * @returns Returns the mp3 audio data stream
      */
-    speak(text, filename) {
+    speak(text, filename, voiceID) {
         return __awaiter(this, void 0, void 0, function* () {
+            const voices = require("../dataset/readoutVoice.json");
+            let VoiceId = voices[voiceID].name;
             let params = {
                 'Text': text,
                 'OutputFormat': 'mp3',
-                'VoiceId': 'Kendra',
+                'VoiceId': VoiceId,
                 //'Engine': 'standard',
                 'Engine': 'neural'
             };

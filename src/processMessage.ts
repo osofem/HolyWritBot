@@ -208,7 +208,23 @@ export default class ProcessMessage{
             });
         }
         else if(content.text == this.#changeReadout){
-            
+            let inline_keyboard = [];
+            const voices = require("../dataset/readoutVoice.json");
+            let keys = Object.keys(voices);
+            for(let key in keys){
+                inline_keyboard.push([{ text: `${voices[keys[key]]['gender'].toUpperCase()} (${voices[keys[key]]['age'].toUpperCase()})`, callback_data: `cVoices: ${keys[key]}`}]);
+            }
+           
+            let keyboard: InlineKeyboardMarkup = {inline_keyboard};
+
+            let currentID = await this.#db.getCurrentVoiceID(content.chatID+'');
+
+            await this.#bot.sendMessage({
+                chat_id: content.chatID,
+                text: `Your voice readout is currently <b> ${voices[currentID].gender.toUpperCase()} (${voices[currentID].age.toUpperCase()}):</b>, please select the voice you want to switch to below!`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
         }
         else if(content.text == this.#donate){
             let inline_keyboard = [];
@@ -219,7 +235,7 @@ export default class ProcessMessage{
 
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
-                text: "Your donations will go towards server fees and developers stipends.",
+                text: "Thank you for your donations, all donations will go towards server fees and developers stipends.",
                 parse_mode: "HTML",
                 reply_markup: keyboard
             });
@@ -271,7 +287,7 @@ export default class ProcessMessage{
      * @returns Returns paged result
      */
     async #searchResultFormating(searchResults: SearchResult[], start: number, length: number): Promise<string>{
-        let result = `<i>${searchResults.length} result(s) from ${this.#bible.edition.toUpperCase()} edition</i>${this.#os.EOL+this.#os.EOL}`;
+        let result = `<i>${searchResults.length} result(s) from the ${this.#bible.edition.toUpperCase()} edition</i>${this.#os.EOL+this.#os.EOL}`;
 
         let i = start<0?0:start>searchResults.length?0:start;
         length = length>(searchResults.length-start)?searchResults.length-start:length;
@@ -502,7 +518,8 @@ export default class ProcessMessage{
             let verse = +query.split(" ")[3];
             let text = await this.#bible.lookupForReadOut(book, chapter, verse);
 
-            let filename = await holyPolly.speak(text, `${book} ${chapter}:${verse}`);
+            let currentVoiceID = await this.#db.getCurrentVoiceID(content.chatID+'');
+            let filename = await holyPolly.speak(text, `${book} ${chapter}:${verse}`, currentVoiceID);
             //send texting status
             await this.#bot.sendChatAction({ chat_id: content.chatID, action: 'record_voice' });
            
@@ -587,10 +604,24 @@ export default class ProcessMessage{
             await this.#bot.editMessageText({
                 chat_id: content.chatID,
                 message_id: content.messageID,
-                text: `Bible edition successfully changed to: <b>${versions[edition]} (${edition.toUpperCase()})</b>`,
+                text: `Your bible edition successfully changed to: <b>${versions[edition]} (${edition.toUpperCase()})</b>`,
                 parse_mode: "HTML"
             });
         }
+
+        //change readout voice
+        if(query.substr(0, 8) == "cVoices:"){
+            let voiceID = query.substr(8).trim();
+            await this.#db.changeVoiceReadout(content.chatID+"", voiceID);
+            const voices = require("../dataset/readoutVoice.json");
+            await this.#bot.editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `Your readout voice successfully changed to: <b>${voices[voiceID].gender.toUpperCase()} (${voices[voiceID].age.toUpperCase()})</b>`,
+                parse_mode: "HTML"
+            });
+        }
+        
 
         //Update or register user
         await this.#updateOrRegisterUser(content.chatID.toString());

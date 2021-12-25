@@ -35,7 +35,7 @@ class Bible extends DB_1.default {
         __classPrivateFieldSet(this, _Bible_userID, content.userID, "f");
     }
     /**
-     * Execute bible
+     * Execute bible: properly loadup the bible
      */
     execute() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -101,7 +101,6 @@ class Bible extends DB_1.default {
      */
     getChapterCount(book) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log(book);
             return this.bible[book]['chapters'].length;
         });
     }

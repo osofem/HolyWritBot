@@ -8,7 +8,7 @@ export default class Bible extends DB {
         userID: string;
     });
     /**
-     * Execute bible
+     * Execute bible: properly loadup the bible
      */
     execute(): Promise<void>;
     /**

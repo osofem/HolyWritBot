@@ -220,6 +220,20 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         else if (content.text == __classPrivateFieldGet(this, _ProcessMessage_changeReadout, "f")) {
+            let inline_keyboard = [];
+            const voices = require("../dataset/readoutVoice.json");
+            let keys = Object.keys(voices);
+            for (let key in keys) {
+                inline_keyboard.push([{ text: `${voices[keys[key]]['gender'].toUpperCase()} (${voices[keys[key]]['age'].toUpperCase()})`, callback_data: `cVoices: ${keys[key]}` }]);
+            }
+            let keyboard = { inline_keyboard };
+            let currentID = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getCurrentVoiceID(content.chatID + '');
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
+                chat_id: content.chatID,
+                text: `Your voice readout is currently <b> ${voices[currentID].gender.toUpperCase()} (${voices[currentID].age.toUpperCase()}):</b>, please select the voice you want to switch to below!`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
         }
         else if (content.text == __classPrivateFieldGet(this, _ProcessMessage_donate, "f")) {
             let inline_keyboard = [];
@@ -229,7 +243,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             let keyboard = { inline_keyboard };
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                 chat_id: content.chatID,
-                text: "Your donations will go towards server fees and developers stipends.",
+                text: "Thank you for your donations, all donations will go towards server fees and developers stipends.",
                 parse_mode: "HTML",
                 reply_markup: keyboard
             });
@@ -271,7 +285,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
     });
 }, _ProcessMessage_searchResultFormating = function _ProcessMessage_searchResultFormating(searchResults, start, length) {
     return __awaiter(this, void 0, void 0, function* () {
-        let result = `<i>${searchResults.length} result(s) from ${__classPrivateFieldGet(this, _ProcessMessage_bible, "f").edition.toUpperCase()} edition</i>${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}`;
+        let result = `<i>${searchResults.length} result(s) from the ${__classPrivateFieldGet(this, _ProcessMessage_bible, "f").edition.toUpperCase()} edition</i>${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}`;
         let i = start < 0 ? 0 : start > searchResults.length ? 0 : start;
         length = length > (searchResults.length - start) ? searchResults.length - start : length;
         for (; i < length + start; i++) {
@@ -486,7 +500,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             let chapter = +query.split(" ")[2];
             let verse = +query.split(" ")[3];
             let text = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").lookupForReadOut(book, chapter, verse);
-            let filename = yield holyPolly.speak(text, `${book} ${chapter}:${verse}`);
+            let currentVoiceID = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getCurrentVoiceID(content.chatID + '');
+            let filename = yield holyPolly.speak(text, `${book} ${chapter}:${verse}`, currentVoiceID);
             //send texting status
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendChatAction({ chat_id: content.chatID, action: 'record_voice' });
             //Save readout request
@@ -556,7 +571,19 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
                 chat_id: content.chatID,
                 message_id: content.messageID,
-                text: `Bible edition successfully changed to: <b>${versions[edition]} (${edition.toUpperCase()})</b>`,
+                text: `Your bible edition successfully changed to: <b>${versions[edition]} (${edition.toUpperCase()})</b>`,
+                parse_mode: "HTML"
+            });
+        }
+        //change readout voice
+        if (query.substr(0, 8) == "cVoices:") {
+            let voiceID = query.substr(8).trim();
+            yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").changeVoiceReadout(content.chatID + "", voiceID);
+            const voices = require("../dataset/readoutVoice.json");
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `Your readout voice successfully changed to: <b>${voices[voiceID].gender.toUpperCase()} (${voices[voiceID].age.toUpperCase()})</b>`,
                 parse_mode: "HTML"
             });
         }

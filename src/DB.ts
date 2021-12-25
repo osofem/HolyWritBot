@@ -32,7 +32,8 @@ export default class DB{
             id: userID,
             firstAccess: +new Date(),
             lastAccess: +new Date(),
-            edition: 'kjv'
+            edition: 'kjv',
+            voiceID: "ID1"
         };
 
         return await this.dbService.create({record, table: this.#usersTable});
@@ -90,6 +91,22 @@ export default class DB{
     }
 
     /**
+     * Change the readout voice
+     * @param userID User ID
+     * @param voiceID ID of voice to change to
+     * @returns Returns the chnaged user data
+     */
+     async changeVoiceReadout(userID: string, voiceID: string){
+        //Create the read request
+        let record = {
+            id: userID,
+            voiceID
+        };
+        return await this.dbService.update({record, table: this.#usersTable});
+    }
+    
+    
+    /**
      * Get the edition for the user
      * @param userID ID of the user
      * @returns Returns the current edition the user selected
@@ -107,6 +124,26 @@ export default class DB{
             return result["records"][0].edition!=undefined?result["records"][0].edition:'kjv';
         else
             return "kjv";
+    }
+
+    /**
+     * Get the current voice ID
+     * @param userID ID of the user
+     * @returns Returns the current voice ID the user selected
+     */
+     async getCurrentVoiceID(userID: string): Promise<string>{
+        //Create the read request
+        let record: db.ReadRequest = {
+            query: "id == \""+userID+"\"",
+            table: this.#usersTable
+        };
+    
+        let result = await this.dbService.read(record);
+
+        if(result["records"])
+            return result["records"][0].voiceID!=undefined?result["records"][0].voiceID:'ID1';
+        else
+            return "ID1";
     }
 
     /***+++++++++++++++++++++

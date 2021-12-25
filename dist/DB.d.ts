@@ -42,11 +42,24 @@ export default class DB {
      */
     changeEdition(userID: string, edition: string): Promise<db.UpdateResponse>;
     /**
+     * Change the readout voice
+     * @param userID User ID
+     * @param voiceID ID of voice to change to
+     * @returns Returns the chnaged user data
+     */
+    changeVoiceReadout(userID: string, voiceID: string): Promise<db.UpdateResponse>;
+    /**
      * Get the edition for the user
      * @param userID ID of the user
      * @returns Returns the current edition the user selected
      */
     getCurrentEdition(userID: string): Promise<string>;
+    /**
+     * Get the current voice ID
+     * @param userID ID of the user
+     * @returns Returns the current voice ID the user selected
+     */
+    getCurrentVoiceID(userID: string): Promise<string>;
     /***+++++++++++++++++++++
         VERSE COUNT
     ++++++++++++++++++++++++***/

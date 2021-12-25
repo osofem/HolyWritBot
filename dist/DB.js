@@ -63,7 +63,8 @@ class DB {
                 id: userID,
                 firstAccess: +new Date(),
                 lastAccess: +new Date(),
-                edition: 'kjv'
+                edition: 'kjv',
+                voiceID: "ID1"
             };
             return yield this.dbService.create({ record, table: __classPrivateFieldGet(this, _DB_usersTable, "f") });
         });
@@ -121,6 +122,22 @@ class DB {
         });
     }
     /**
+     * Change the readout voice
+     * @param userID User ID
+     * @param voiceID ID of voice to change to
+     * @returns Returns the chnaged user data
+     */
+    changeVoiceReadout(userID, voiceID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            //Create the read request
+            let record = {
+                id: userID,
+                voiceID
+            };
+            return yield this.dbService.update({ record, table: __classPrivateFieldGet(this, _DB_usersTable, "f") });
+        });
+    }
+    /**
      * Get the edition for the user
      * @param userID ID of the user
      * @returns Returns the current edition the user selected
@@ -137,6 +154,25 @@ class DB {
                 return result["records"][0].edition != undefined ? result["records"][0].edition : 'kjv';
             else
                 return "kjv";
+        });
+    }
+    /**
+     * Get the current voice ID
+     * @param userID ID of the user
+     * @returns Returns the current voice ID the user selected
+     */
+    getCurrentVoiceID(userID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            //Create the read request
+            let record = {
+                query: "id == \"" + userID + "\"",
+                table: __classPrivateFieldGet(this, _DB_usersTable, "f")
+            };
+            let result = yield this.dbService.read(record);
+            if (result["records"])
+                return result["records"][0].voiceID != undefined ? result["records"][0].voiceID : 'ID1';
+            else
+                return "ID1";
         });
     }
     /***+++++++++++++++++++++

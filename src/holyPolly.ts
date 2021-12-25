@@ -1,5 +1,7 @@
 export default class HolyPolly{
+    
     #AWS; #Polly; #fs;
+
     constructor(){
         // Load the SDK
         this.#AWS = require('aws-sdk');
@@ -15,13 +17,20 @@ export default class HolyPolly{
     /**
      * Turn text to speech 
      * @param text Text to synthesize
+     * @param filename Name to give the output mp3 file
+     * @param voiceID Voice ID to use for the read out
      * @returns Returns the mp3 audio data stream
      */
-    async speak(text: string, filename: string): Promise<any>{
+    async speak(text: string, filename: string, voiceID: string): Promise<any>{
+
+        const voices = require("../dataset/readoutVoice.json");
+
+        let VoiceId = voices[voiceID].name;
+
         let params = {
             'Text': text,
             'OutputFormat': 'mp3',
-            'VoiceId': 'Kendra',
+            'VoiceId': VoiceId,
             //'Engine': 'standard',
             'Engine': 'neural'
         }

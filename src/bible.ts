@@ -10,7 +10,7 @@ export default class Bible extends DB{
     }
 
     /**
-     * Execute bible
+     * Execute bible: properly loadup the bible
      */
     async execute(){
         this.edition = await this.getCurrentEdition(this.#userID);
@@ -76,7 +76,6 @@ export default class Bible extends DB{
      * @returns Returns the number of chapters in the specified book
      */
     async getChapterCount(book: string){
-        console.log(book);
         return this.bible[book]['chapters'].length;
     }
 

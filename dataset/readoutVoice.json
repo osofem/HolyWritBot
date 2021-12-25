@@ -1,17 +1,21 @@
 {
-    "Ivy": {
+    "ID0": {
+        "name": "Ivy",
         "gender": "female", 
         "age": "child"
     },
-    "Kendra": {
+    "ID1": {
+        "name": "Kendra",
         "gender": "female", 
         "age": "adult"
     },
-    "Joey": {
+    "ID2": {
+        "name": "Joey",
         "gender": "male", 
         "age": "adult"
     },
-    "Justin":{
+    "ID3":{
+        "name": "Justin",
         "gender": "male", 
         "age": "child"
     }
