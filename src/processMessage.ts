@@ -5,15 +5,34 @@ import Bible from "./bible";
 import HolyPolly from "./holyPolly"
 import HolySearch, { SearchResult } from "./holySearch";
 import DB from "./DB";
+import { ReplyKeyboardRemove } from "prosperly/dist/typealiases/replyKeyboardRemove";
 
 export default class ProcessMessage{
-    #update: any; #bot: Prosperly; #bible: Bible; #os = require("os"); #db: DB;
-    #maxKeyBoardHeight = 5; #maxKeyBoardWidth = 5; #maxSearchResultLength = 10;
+    #update: any; #bot: Prosperly; #os = require("os"); #db: DB; #m3oKey: string; #userID: string;
+    #maxKeyBoardHeight = 5; #maxKeyBoardWidth = 5; #maxSearchResultLength = 10; #bible: Bible;
+    #changeVersion = "🏷 Change Bible Edition";
+    #changeReadout = "🗣 Change Read Out Voice";
+    #donate = "💳 Donate";
+    #removeKeyboard = "🚫 Remove this keyboard";
 
     constructor(update: string, content: {bot: Prosperly; m3oKey: string}){
         this.#update = JSON.parse(update); 
         this.#bot = content.bot;
-        this.#bible = new Bible();
+        this.#m3oKey = content.m3oKey;
+        
+        //get userID
+        this.#userID = "";
+        if(typeof this.#update['message'] !== 'undefined'){
+            this.#userID = this.#update['message']['chat']['id'];
+        }
+        else if(typeof this.#update['inline_query'] !== 'undefined'){
+            this.#userID = this.#update['inline_query']['from']['id'];
+        }
+        else if(typeof this.#update['callback_query'] !== 'undefined'){
+            this.#userID = this.#update['callback_query']['from']['id'];
+        }
+
+        this.#bible = new Bible({m3oKey: content.m3oKey, userID: this.#userID});
         this.#db = new DB(content.m3oKey);
     }
 
@@ -21,6 +40,9 @@ export default class ProcessMessage{
      * Execute the current update
      */
      async execute(){
+        //Load bible properly
+        await this.#bible.execute();
+
         let update = this.#update;
         //message //////////////////////
         if(typeof update['message'] !== 'undefined'){
@@ -49,7 +71,9 @@ export default class ProcessMessage{
         }
     }
 
-
+    //*************************
+    // PROCESS MESSAGE
+    // ***********************/
     async #processMessage(content: contentParam){
         if(content.text == "/start"){
             let firstName = JSON.parse(await this.#bot.getChat(content.chatID))['result']['first_name'];
@@ -122,7 +146,7 @@ export default class ProcessMessage{
         else if(content.text?.substr(0, 3) == "/s "){
             let searchTerm = content.text?.substr(2).trim();
 
-            const holySearch: HolySearch = new HolySearch();
+            const holySearch: HolySearch = new HolySearch({m3oKey: this.#m3oKey, userID: content.chatID+""});
             let searchResults: SearchResult[] = await holySearch.search(searchTerm);
             
             let lengthToReturn = Math.min(searchResults.length, this.#maxSearchResultLength);
@@ -145,6 +169,69 @@ export default class ProcessMessage{
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
                 text: `<b>${searchTerm}</b>`+ this.#os.EOL + this.#os.EOL + await this.#searchResultFormating(searchResults, 0, lengthToReturn),
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //settings
+        else if(content.text == "/settings"){
+            let keyboard = [];
+            keyboard.push([{ text: this.#changeVersion}]);
+            keyboard.push([{ text: this.#changeReadout}]);
+            keyboard.push([{ text: this.#donate}]);
+            keyboard.push([{ text: this.#removeKeyboard}]);
+            let keyboardv = {keyboard, one_time_keyboard: true, resize_keyboard: true, input_field_placeholder: "Please select a setting"};
+
+            await this.#bot.sendMessage({
+                chat_id: content.chatID,
+                text: `Please select a setting`,
+                parse_mode: "HTML",
+                reply_markup: keyboardv
+            });
+        }
+        else if(content.text == this.#changeVersion){
+            let inline_keyboard = [];
+            const versions = require("../dataset/editions.json");
+            let keys = Object.keys(versions);
+            for(let key in keys){
+                inline_keyboard.push([{ text: `${versions[keys[key]]} (${keys[key]})`, callback_data: `bEdition: ${keys[key]}`}]);
+            }
+           
+            let keyboard: InlineKeyboardMarkup = {inline_keyboard};
+            let edition = await this.#db.getCurrentEdition(content.chatID+"");
+
+            await this.#bot.sendMessage({
+                chat_id: content.chatID,
+                text: `Your bible edition is currently <b>${versions[edition]}: (${edition.toUpperCase()})</b>, please select the edition you want to switch to below!`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        else if(content.text == this.#changeReadout){
+            
+        }
+        else if(content.text == this.#donate){
+            let inline_keyboard = [];
+            inline_keyboard.push([
+                { text: "💳 Donate", url: process.env.donateURL}
+            ]);
+            let keyboard = {inline_keyboard};
+
+            await this.#bot.sendMessage({
+                chat_id: content.chatID,
+                text: "Your donations will go towards server fees and developers stipends.",
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+            
+        }
+        else if(content.text == this.#removeKeyboard){
+            let remove_keyboard = true;
+            let keyboard: ReplyKeyboardRemove = {remove_keyboard};
+
+            await this.#bot.sendMessage({
+                chat_id: content.chatID,
+                text: "Settings keyboard removed successfully!",
                 parse_mode: "HTML",
                 reply_markup: keyboard
             });
@@ -184,7 +271,7 @@ export default class ProcessMessage{
      * @returns Returns paged result
      */
     async #searchResultFormating(searchResults: SearchResult[], start: number, length: number): Promise<string>{
-        let result = `<i>${searchResults.length} result(s) </i>${this.#os.EOL+this.#os.EOL}`;
+        let result = `<i>${searchResults.length} result(s) from ${this.#bible.edition.toUpperCase()} edition</i>${this.#os.EOL+this.#os.EOL}`;
 
         let i = start<0?0:start>searchResults.length?0:start;
         length = length>(searchResults.length-start)?searchResults.length-start:length;
@@ -198,11 +285,17 @@ export default class ProcessMessage{
         return result;
     }
 
+    //*************************
+    // INLINE QUERY
+    // ***********************/
     async #processInlineQuery(content: contentParam){
         //Update or register user
         await this.#updateOrRegisterUser(content.chatID.toString());
     }
 
+    //*************************
+    // CALLBACK QUERY
+    // ***********************/
     async #processCallbackQuery(content: contentParam){
         let query = content.queryData?content.queryData:"";
         //Previous verse e.g. 'prev: prv 18 23'
@@ -431,7 +524,7 @@ export default class ProcessMessage{
             let startIndex = +query.split(" ")[1];
             let searchTerm = query.substr(query.split(" ")[0].length + (startIndex+'').length+1).trim();
 
-            const holySearch: HolySearch = new HolySearch();
+            const holySearch: HolySearch = new HolySearch({m3oKey: this.#m3oKey, userID: content.chatID+""});
             let searchResults: SearchResult[] = await holySearch.search(searchTerm);
             
             let lengthToReturn = Math.min(searchResults.length-startIndex, this.#maxSearchResultLength);
@@ -460,7 +553,7 @@ export default class ProcessMessage{
             
             let searchTerm = query.substr(query.split(" ")[0].length + (stopIndex+'').length+1).trim();
 
-            const holySearch: HolySearch = new HolySearch();
+            const holySearch: HolySearch = new HolySearch({m3oKey: this.#m3oKey, userID: content.chatID+""});
             let searchResults: SearchResult[] = await holySearch.search(searchTerm);
             
             stopIndex = stopIndex==0?Math.min(searchResults.length, this.#maxSearchResultLength):stopIndex;
@@ -483,6 +576,19 @@ export default class ProcessMessage{
                 text: `<b>${searchTerm}</b>`+ this.#os.EOL + this.#os.EOL + await this.#searchResultFormating(searchResults, startIndex, lengthToReturn),
                 parse_mode: "HTML",
                 reply_markup: keyboard
+            });
+        }
+
+        //Edition change
+        if(query.substr(0, 9) == "bEdition:"){
+            let edition = query.substr(9).trim();
+            await this.#db.changeEdition(content.chatID+"", edition);
+            const versions = require("../dataset/editions.json");
+            await this.#bot.editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `Bible edition successfully changed to: <b>${versions[edition]} (${edition.toUpperCase()})</b>`,
+                parse_mode: "HTML"
             });
         }
 

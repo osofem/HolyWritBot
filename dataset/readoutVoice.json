@@ -1,0 +1,18 @@
+{
+    "Ivy": {
+        "gender": "female", 
+        "age": "child"
+    },
+    "Kendra": {
+        "gender": "female", 
+        "age": "adult"
+    },
+    "Joey": {
+        "gender": "male", 
+        "age": "adult"
+    },
+    "Justin":{
+        "gender": "male", 
+        "age": "child"
+    }
+}

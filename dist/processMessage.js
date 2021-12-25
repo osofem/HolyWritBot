@@ -22,7 +22,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _ProcessMessage_instances, _ProcessMessage_update, _ProcessMessage_bot, _ProcessMessage_bible, _ProcessMessage_os, _ProcessMessage_db, _ProcessMessage_maxKeyBoardHeight, _ProcessMessage_maxKeyBoardWidth, _ProcessMessage_maxSearchResultLength, _ProcessMessage_processMessage, _ProcessMessage_searchResultFormating, _ProcessMessage_processInlineQuery, _ProcessMessage_processCallbackQuery, _ProcessMessage_updateOrRegisterUser, _ProcessMessage_getVerseKeyboard, _ProcessMessage_getChapterKeyboard, _ProcessMessage_oldTestamentKeyboard, _ProcessMessage_newTestamentKeyboard;
+var _ProcessMessage_instances, _ProcessMessage_update, _ProcessMessage_bot, _ProcessMessage_os, _ProcessMessage_db, _ProcessMessage_m3oKey, _ProcessMessage_userID, _ProcessMessage_maxKeyBoardHeight, _ProcessMessage_maxKeyBoardWidth, _ProcessMessage_maxSearchResultLength, _ProcessMessage_bible, _ProcessMessage_changeVersion, _ProcessMessage_changeReadout, _ProcessMessage_donate, _ProcessMessage_removeKeyboard, _ProcessMessage_processMessage, _ProcessMessage_searchResultFormating, _ProcessMessage_processInlineQuery, _ProcessMessage_processCallbackQuery, _ProcessMessage_updateOrRegisterUser, _ProcessMessage_getVerseKeyboard, _ProcessMessage_getChapterKeyboard, _ProcessMessage_oldTestamentKeyboard, _ProcessMessage_newTestamentKeyboard;
 Object.defineProperty(exports, "__esModule", { value: true });
 const bible_1 = __importDefault(require("./bible"));
 const holyPolly_1 = __importDefault(require("./holyPolly"));
@@ -33,15 +33,33 @@ class ProcessMessage {
         _ProcessMessage_instances.add(this);
         _ProcessMessage_update.set(this, void 0);
         _ProcessMessage_bot.set(this, void 0);
-        _ProcessMessage_bible.set(this, void 0);
         _ProcessMessage_os.set(this, require("os"));
         _ProcessMessage_db.set(this, void 0);
+        _ProcessMessage_m3oKey.set(this, void 0);
+        _ProcessMessage_userID.set(this, void 0);
         _ProcessMessage_maxKeyBoardHeight.set(this, 5);
         _ProcessMessage_maxKeyBoardWidth.set(this, 5);
         _ProcessMessage_maxSearchResultLength.set(this, 10);
+        _ProcessMessage_bible.set(this, void 0);
+        _ProcessMessage_changeVersion.set(this, "🏷 Change Bible Edition");
+        _ProcessMessage_changeReadout.set(this, "🗣 Change Read Out Voice");
+        _ProcessMessage_donate.set(this, "💳 Donate");
+        _ProcessMessage_removeKeyboard.set(this, "🚫 Remove this keyboard");
         __classPrivateFieldSet(this, _ProcessMessage_update, JSON.parse(update), "f");
         __classPrivateFieldSet(this, _ProcessMessage_bot, content.bot, "f");
-        __classPrivateFieldSet(this, _ProcessMessage_bible, new bible_1.default(), "f");
+        __classPrivateFieldSet(this, _ProcessMessage_m3oKey, content.m3oKey, "f");
+        //get userID
+        __classPrivateFieldSet(this, _ProcessMessage_userID, "", "f");
+        if (typeof __classPrivateFieldGet(this, _ProcessMessage_update, "f")['message'] !== 'undefined') {
+            __classPrivateFieldSet(this, _ProcessMessage_userID, __classPrivateFieldGet(this, _ProcessMessage_update, "f")['message']['chat']['id'], "f");
+        }
+        else if (typeof __classPrivateFieldGet(this, _ProcessMessage_update, "f")['inline_query'] !== 'undefined') {
+            __classPrivateFieldSet(this, _ProcessMessage_userID, __classPrivateFieldGet(this, _ProcessMessage_update, "f")['inline_query']['from']['id'], "f");
+        }
+        else if (typeof __classPrivateFieldGet(this, _ProcessMessage_update, "f")['callback_query'] !== 'undefined') {
+            __classPrivateFieldSet(this, _ProcessMessage_userID, __classPrivateFieldGet(this, _ProcessMessage_update, "f")['callback_query']['from']['id'], "f");
+        }
+        __classPrivateFieldSet(this, _ProcessMessage_bible, new bible_1.default({ m3oKey: content.m3oKey, userID: __classPrivateFieldGet(this, _ProcessMessage_userID, "f") }), "f");
         __classPrivateFieldSet(this, _ProcessMessage_db, new DB_1.default(content.m3oKey), "f");
     }
     /**
@@ -49,6 +67,8 @@ class ProcessMessage {
      */
     execute() {
         return __awaiter(this, void 0, void 0, function* () {
+            //Load bible properly
+            yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").execute();
             let update = __classPrivateFieldGet(this, _ProcessMessage_update, "f");
             //message //////////////////////
             if (typeof update['message'] !== 'undefined') {
@@ -77,7 +97,7 @@ class ProcessMessage {
     }
 }
 exports.default = ProcessMessage;
-_ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _ProcessMessage_bible = new WeakMap(), _ProcessMessage_os = new WeakMap(), _ProcessMessage_db = new WeakMap(), _ProcessMessage_maxKeyBoardHeight = new WeakMap(), _ProcessMessage_maxKeyBoardWidth = new WeakMap(), _ProcessMessage_maxSearchResultLength = new WeakMap(), _ProcessMessage_instances = new WeakSet(), _ProcessMessage_processMessage = function _ProcessMessage_processMessage(content) {
+_ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _ProcessMessage_os = new WeakMap(), _ProcessMessage_db = new WeakMap(), _ProcessMessage_m3oKey = new WeakMap(), _ProcessMessage_userID = new WeakMap(), _ProcessMessage_maxKeyBoardHeight = new WeakMap(), _ProcessMessage_maxKeyBoardWidth = new WeakMap(), _ProcessMessage_maxSearchResultLength = new WeakMap(), _ProcessMessage_bible = new WeakMap(), _ProcessMessage_changeVersion = new WeakMap(), _ProcessMessage_changeReadout = new WeakMap(), _ProcessMessage_donate = new WeakMap(), _ProcessMessage_removeKeyboard = new WeakMap(), _ProcessMessage_instances = new WeakSet(), _ProcessMessage_processMessage = function _ProcessMessage_processMessage(content) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         if (content.text == "/start") {
@@ -146,7 +166,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         //Search
         else if (((_a = content.text) === null || _a === void 0 ? void 0 : _a.substr(0, 3)) == "/s ") {
             let searchTerm = (_b = content.text) === null || _b === void 0 ? void 0 : _b.substr(2).trim();
-            const holySearch = new holySearch_1.default();
+            const holySearch = new holySearch_1.default({ m3oKey: __classPrivateFieldGet(this, _ProcessMessage_m3oKey, "f"), userID: content.chatID + "" });
             let searchResults = yield holySearch.search(searchTerm);
             let lengthToReturn = Math.min(searchResults.length, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f"));
             let nextIndex = lengthToReturn == searchResults.length ? 0 : lengthToReturn;
@@ -164,6 +184,62 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
                 chat_id: content.chatID,
                 text: `<b>${searchTerm}</b>` + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + (yield __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_searchResultFormating).call(this, searchResults, 0, lengthToReturn)),
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //settings
+        else if (content.text == "/settings") {
+            let keyboard = [];
+            keyboard.push([{ text: __classPrivateFieldGet(this, _ProcessMessage_changeVersion, "f") }]);
+            keyboard.push([{ text: __classPrivateFieldGet(this, _ProcessMessage_changeReadout, "f") }]);
+            keyboard.push([{ text: __classPrivateFieldGet(this, _ProcessMessage_donate, "f") }]);
+            keyboard.push([{ text: __classPrivateFieldGet(this, _ProcessMessage_removeKeyboard, "f") }]);
+            let keyboardv = { keyboard, one_time_keyboard: true, resize_keyboard: true, input_field_placeholder: "Please select a setting" };
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
+                chat_id: content.chatID,
+                text: `Please select a setting`,
+                parse_mode: "HTML",
+                reply_markup: keyboardv
+            });
+        }
+        else if (content.text == __classPrivateFieldGet(this, _ProcessMessage_changeVersion, "f")) {
+            let inline_keyboard = [];
+            const versions = require("../dataset/editions.json");
+            let keys = Object.keys(versions);
+            for (let key in keys) {
+                inline_keyboard.push([{ text: `${versions[keys[key]]} (${keys[key]})`, callback_data: `bEdition: ${keys[key]}` }]);
+            }
+            let keyboard = { inline_keyboard };
+            let edition = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getCurrentEdition(content.chatID + "");
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
+                chat_id: content.chatID,
+                text: `Your bible edition is currently <b>${versions[edition]}: (${edition.toUpperCase()})</b>, please select the edition you want to switch to below!`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        else if (content.text == __classPrivateFieldGet(this, _ProcessMessage_changeReadout, "f")) {
+        }
+        else if (content.text == __classPrivateFieldGet(this, _ProcessMessage_donate, "f")) {
+            let inline_keyboard = [];
+            inline_keyboard.push([
+                { text: "💳 Donate", url: process.env.donateURL }
+            ]);
+            let keyboard = { inline_keyboard };
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
+                chat_id: content.chatID,
+                text: "Your donations will go towards server fees and developers stipends.",
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        else if (content.text == __classPrivateFieldGet(this, _ProcessMessage_removeKeyboard, "f")) {
+            let remove_keyboard = true;
+            let keyboard = { remove_keyboard };
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendMessage({
+                chat_id: content.chatID,
+                text: "Settings keyboard removed successfully!",
                 parse_mode: "HTML",
                 reply_markup: keyboard
             });
@@ -195,7 +271,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
     });
 }, _ProcessMessage_searchResultFormating = function _ProcessMessage_searchResultFormating(searchResults, start, length) {
     return __awaiter(this, void 0, void 0, function* () {
-        let result = `<i>${searchResults.length} result(s) </i>${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}`;
+        let result = `<i>${searchResults.length} result(s) from ${__classPrivateFieldGet(this, _ProcessMessage_bible, "f").edition.toUpperCase()} edition</i>${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}`;
         let i = start < 0 ? 0 : start > searchResults.length ? 0 : start;
         length = length > (searchResults.length - start) ? searchResults.length - start : length;
         for (; i < length + start; i++) {
@@ -428,7 +504,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         if (query.substr(0, 11) == "nextSearch:") {
             let startIndex = +query.split(" ")[1];
             let searchTerm = query.substr(query.split(" ")[0].length + (startIndex + '').length + 1).trim();
-            const holySearch = new holySearch_1.default();
+            const holySearch = new holySearch_1.default({ m3oKey: __classPrivateFieldGet(this, _ProcessMessage_m3oKey, "f"), userID: content.chatID + "" });
             let searchResults = yield holySearch.search(searchTerm);
             let lengthToReturn = Math.min(searchResults.length - startIndex, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f"));
             let nextIndex = startIndex + lengthToReturn >= searchResults.length ? startIndex : startIndex + lengthToReturn;
@@ -451,7 +527,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         else if (query.substr(0, 11) == "prevSearch:") {
             let stopIndex = +query.split(" ")[1];
             let searchTerm = query.substr(query.split(" ")[0].length + (stopIndex + '').length + 1).trim();
-            const holySearch = new holySearch_1.default();
+            const holySearch = new holySearch_1.default({ m3oKey: __classPrivateFieldGet(this, _ProcessMessage_m3oKey, "f"), userID: content.chatID + "" });
             let searchResults = yield holySearch.search(searchTerm);
             stopIndex = stopIndex == 0 ? Math.min(searchResults.length, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f")) : stopIndex;
             let startIndex = stopIndex - __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f");
@@ -470,6 +546,18 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 text: `<b>${searchTerm}</b>` + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + (yield __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_searchResultFormating).call(this, searchResults, startIndex, lengthToReturn)),
                 parse_mode: "HTML",
                 reply_markup: keyboard
+            });
+        }
+        //Edition change
+        if (query.substr(0, 9) == "bEdition:") {
+            let edition = query.substr(9).trim();
+            yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").changeEdition(content.chatID + "", edition);
+            const versions = require("../dataset/editions.json");
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `Bible edition successfully changed to: <b>${versions[edition]} (${edition.toUpperCase()})</b>`,
+                parse_mode: "HTML"
             });
         }
         //Update or register user

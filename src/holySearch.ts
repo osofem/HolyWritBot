@@ -2,11 +2,14 @@ import Bible from "./bible";
 
 export default class HolySearch extends Bible{
 
-    constructor(){
-        super();
+    constructor(content: {m3oKey: string; userID: string}){
+        super(content);
     }
 
     async search(word: string): Promise<SearchResult[]>{
+        //Load bible properly
+        await this.execute();
+        
         let keys = Object.keys(this.bible);
 
         let results = [];

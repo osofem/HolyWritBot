@@ -1,11 +1,28 @@
-export default class Bible{
-    bible: any; #os = require("os");
+import DB from "./DB";
 
-    constructor(){
-        //load bible
-        this.bible = require("../dataset/kjv.json");
+export default class Bible extends DB{
+    bible: any; #os = require("os"); edition: string; #userID: string;
+
+    constructor(content: {m3oKey: string; userID: string}){
+        super(content.m3oKey);
+        this.edition = "";
+        this.#userID = content.userID;
     }
 
+    /**
+     * Execute bible
+     */
+    async execute(){
+        this.edition = await this.getCurrentEdition(this.#userID);
+        //load bible
+        this.bible = require(`../dataset/${this.edition}.json`);
+    }
+
+    /**
+     * Get the verse of the bible
+     * @param data The verse to look up e.g. 1 Chronicles 3 4, John 3:16, etc
+     * @returns Returns the verse
+     */
     async verse(data: string): Promise<any>{
         //data should be in the format [book chapter:verse] or [book chapter verse]
         let book, chapter, verse;
@@ -38,10 +55,13 @@ export default class Bible{
             verse = +vdata[1].split(":")[1];
         }
         if(book && chapter && verse){
+            book = book.toLowerCase();
+            
             let v = await this.#lookup(book, chapter, verse);
-            if(v != "object"){
+            
+            if(v != "error"){
                 v = await this.#refineVerse(v);
-                let encodedVerse = `<b>${this.bible[book].name} ${chapter}:${verse}</b>${this.#os.EOL}${this.#os.EOL}${v}`;
+                let encodedVerse = `<b>${this.bible[book].name} ${chapter}:${verse} (${this.edition.toUpperCase()})</b>${this.#os.EOL}${this.#os.EOL}${v}`;
                 let keyboard = await this.#keyboard(book, chapter, verse);
                 return {encodedVerse, keyboard};
             }
@@ -84,7 +104,7 @@ export default class Bible{
             let v = this.bible[book]['chapters'][chapter-1][verse-1];
             return v;
         }catch(e: any){
-            return typeof e;
+            return "error";
         }
     }
 

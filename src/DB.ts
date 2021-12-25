@@ -2,7 +2,7 @@ import * as db from "m3o/db";
 
 export default class DB{
     apiKey: string; dbService;
-    #usersTable = process.env.usersTable;
+    #usersTable = process.env.usersTable;//?process.env.usersTable:"devHolyWritUsers";
     #versesCountTable = process.env.versesCountTable;
     #readoutCountTable = process.env.readoutCountTable;
     #searchCountTable = process.env.searchCountTable;
@@ -72,6 +72,41 @@ export default class DB{
      */
     async getTotalUsers(): Promise<db.CountResponse>{
         return this.dbService.count({table: this.#usersTable});
+    }
+
+    /**
+     * Change the bible edition for a user
+     * @param userID User ID
+     * @param edition Edition to change to
+     * @returns Returns the chnaged user data
+     */
+    async changeEdition(userID: string, edition: string){
+        //Create the read request
+        let record = {
+            id: userID,
+            edition
+        };
+        return await this.dbService.update({record, table: this.#usersTable});
+    }
+
+    /**
+     * Get the edition for the user
+     * @param userID ID of the user
+     * @returns Returns the current edition the user selected
+     */
+    async getCurrentEdition(userID: string): Promise<string>{
+        //Create the read request
+        let record: db.ReadRequest = {
+            query: "id == \""+userID+"\"",
+            table: this.#usersTable
+        };
+    
+        let result = await this.dbService.read(record);
+
+        if(result["records"])
+            return result["records"][0].edition!=undefined?result["records"][0].edition:'kjv';
+        else
+            return "kjv";
     }
 
     /***+++++++++++++++++++++

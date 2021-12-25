@@ -8,20 +8,47 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
 var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
     if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _Bible_instances, _Bible_os, _Bible_lookup, _Bible_refineVerse, _Bible_keyboard;
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var _Bible_instances, _Bible_os, _Bible_userID, _Bible_lookup, _Bible_refineVerse, _Bible_keyboard;
 Object.defineProperty(exports, "__esModule", { value: true });
-class Bible {
-    constructor() {
+const DB_1 = __importDefault(require("./DB"));
+class Bible extends DB_1.default {
+    constructor(content) {
+        super(content.m3oKey);
         _Bible_instances.add(this);
         _Bible_os.set(this, require("os"));
-        //load bible
-        this.bible = require("../dataset/kjv.json");
+        _Bible_userID.set(this, void 0);
+        this.edition = "";
+        __classPrivateFieldSet(this, _Bible_userID, content.userID, "f");
     }
+    /**
+     * Execute bible
+     */
+    execute() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.edition = yield this.getCurrentEdition(__classPrivateFieldGet(this, _Bible_userID, "f"));
+            //load bible
+            this.bible = require(`../dataset/${this.edition}.json`);
+        });
+    }
+    /**
+     * Get the verse of the bible
+     * @param data The verse to look up e.g. 1 Chronicles 3 4, John 3:16, etc
+     * @returns Returns the verse
+     */
     verse(data) {
         return __awaiter(this, void 0, void 0, function* () {
             //data should be in the format [book chapter:verse] or [book chapter verse]
@@ -55,10 +82,11 @@ class Bible {
                 verse = +vdata[1].split(":")[1];
             }
             if (book && chapter && verse) {
+                book = book.toLowerCase();
                 let v = yield __classPrivateFieldGet(this, _Bible_instances, "m", _Bible_lookup).call(this, book, chapter, verse);
-                if (v != "object") {
+                if (v != "error") {
                     v = yield __classPrivateFieldGet(this, _Bible_instances, "m", _Bible_refineVerse).call(this, v);
-                    let encodedVerse = `<b>${this.bible[book].name} ${chapter}:${verse}</b>${__classPrivateFieldGet(this, _Bible_os, "f").EOL}${__classPrivateFieldGet(this, _Bible_os, "f").EOL}${v}`;
+                    let encodedVerse = `<b>${this.bible[book].name} ${chapter}:${verse} (${this.edition.toUpperCase()})</b>${__classPrivateFieldGet(this, _Bible_os, "f").EOL}${__classPrivateFieldGet(this, _Bible_os, "f").EOL}${v}`;
                     let keyboard = yield __classPrivateFieldGet(this, _Bible_instances, "m", _Bible_keyboard).call(this, book, chapter, verse);
                     return { encodedVerse, keyboard };
                 }
@@ -197,7 +225,7 @@ class Bible {
     }
 }
 exports.default = Bible;
-_Bible_os = new WeakMap(), _Bible_instances = new WeakSet(), _Bible_lookup = function _Bible_lookup(book, chapter, verse) {
+_Bible_os = new WeakMap(), _Bible_userID = new WeakMap(), _Bible_instances = new WeakSet(), _Bible_lookup = function _Bible_lookup(book, chapter, verse) {
     return __awaiter(this, void 0, void 0, function* () {
         book = book.toLowerCase();
         try {
@@ -205,7 +233,7 @@ _Bible_os = new WeakMap(), _Bible_instances = new WeakSet(), _Bible_lookup = fun
             return v;
         }
         catch (e) {
-            return typeof e;
+            return "error";
         }
     });
 }, _Bible_refineVerse = function _Bible_refineVerse(verse) {

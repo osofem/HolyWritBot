@@ -14,11 +14,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const bible_1 = __importDefault(require("./bible"));
 class HolySearch extends bible_1.default {
-    constructor() {
-        super();
+    constructor(content) {
+        super(content);
     }
     search(word) {
         return __awaiter(this, void 0, void 0, function* () {
+            //Load bible properly
+            yield this.execute();
             let keys = Object.keys(this.bible);
             let results = [];
             for (let i = 0; i < keys.length; i++) {

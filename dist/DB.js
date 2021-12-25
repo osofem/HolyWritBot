@@ -41,7 +41,7 @@ class DB {
      * @param key M3O service API key
      */
     constructor(key) {
-        _DB_usersTable.set(this, process.env.usersTable);
+        _DB_usersTable.set(this, process.env.usersTable); //?process.env.usersTable:"devHolyWritUsers";
         _DB_versesCountTable.set(this, process.env.versesCountTable);
         _DB_readoutCountTable.set(this, process.env.readoutCountTable);
         _DB_searchCountTable.set(this, process.env.searchCountTable);
@@ -102,6 +102,41 @@ class DB {
     getTotalUsers() {
         return __awaiter(this, void 0, void 0, function* () {
             return this.dbService.count({ table: __classPrivateFieldGet(this, _DB_usersTable, "f") });
+        });
+    }
+    /**
+     * Change the bible edition for a user
+     * @param userID User ID
+     * @param edition Edition to change to
+     * @returns Returns the chnaged user data
+     */
+    changeEdition(userID, edition) {
+        return __awaiter(this, void 0, void 0, function* () {
+            //Create the read request
+            let record = {
+                id: userID,
+                edition
+            };
+            return yield this.dbService.update({ record, table: __classPrivateFieldGet(this, _DB_usersTable, "f") });
+        });
+    }
+    /**
+     * Get the edition for the user
+     * @param userID ID of the user
+     * @returns Returns the current edition the user selected
+     */
+    getCurrentEdition(userID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            //Create the read request
+            let record = {
+                query: "id == \"" + userID + "\"",
+                table: __classPrivateFieldGet(this, _DB_usersTable, "f")
+            };
+            let result = yield this.dbService.read(record);
+            if (result["records"])
+                return result["records"][0].edition != undefined ? result["records"][0].edition : 'kjv';
+            else
+                return "kjv";
         });
     }
     /***+++++++++++++++++++++

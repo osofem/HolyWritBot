@@ -34,6 +34,19 @@ export default class DB {
      * @returns Returns the total bot user
      */
     getTotalUsers(): Promise<db.CountResponse>;
+    /**
+     * Change the bible edition for a user
+     * @param userID User ID
+     * @param edition Edition to change to
+     * @returns Returns the chnaged user data
+     */
+    changeEdition(userID: string, edition: string): Promise<db.UpdateResponse>;
+    /**
+     * Get the edition for the user
+     * @param userID ID of the user
+     * @returns Returns the current edition the user selected
+     */
+    getCurrentEdition(userID: string): Promise<string>;
     /***+++++++++++++++++++++
         VERSE COUNT
     ++++++++++++++++++++++++***/

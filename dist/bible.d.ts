@@ -1,7 +1,21 @@
-export default class Bible {
+import DB from "./DB";
+export default class Bible extends DB {
     #private;
     bible: any;
-    constructor();
+    edition: string;
+    constructor(content: {
+        m3oKey: string;
+        userID: string;
+    });
+    /**
+     * Execute bible
+     */
+    execute(): Promise<void>;
+    /**
+     * Get the verse of the bible
+     * @param data The verse to look up e.g. 1 Chronicles 3 4, John 3:16, etc
+     * @returns Returns the verse
+     */
     verse(data: string): Promise<any>;
     /**
      * Get the number of chapters in a book
