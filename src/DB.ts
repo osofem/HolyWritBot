@@ -117,10 +117,10 @@ export default class DB{
             query: "id == \""+userID+"\"",
             table: this.#usersTable
         };
-    
+
         let result = await this.dbService.read(record);
 
-        if(result["records"])
+        if(result["records"] && result["records"][0] != undefined)
             return result["records"][0].edition!=undefined?result["records"][0].edition:'kjv';
         else
             return "kjv";

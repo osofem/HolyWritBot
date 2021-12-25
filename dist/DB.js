@@ -150,7 +150,7 @@ class DB {
                 table: __classPrivateFieldGet(this, _DB_usersTable, "f")
             };
             let result = yield this.dbService.read(record);
-            if (result["records"])
+            if (result["records"] && result["records"][0] != undefined)
                 return result["records"][0].edition != undefined ? result["records"][0].edition : 'kjv';
             else
                 return "kjv";
