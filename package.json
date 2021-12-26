@@ -1,6 +1,6 @@
 {
   "name": "holywritbot",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "The Holy Writ",
   "main": "index.js",
   "scripts": {
