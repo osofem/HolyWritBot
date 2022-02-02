@@ -128,10 +128,10 @@ export default class ProcessMessage{
             let searchCount = await this.#db.getTotalSearchCount();
             
             let stat = "📊 <b>Bot Statistics</b>"+this.#os.EOL+this.#os.EOL;
-            stat += `<b>Users:</b> <i>${usersCount.count} users ${this.#os.EOL}</i>`;
-            stat += `<b>Verses:</b> <i>${verseCount.count} verses served ${this.#os.EOL}</i>`;
-            stat += `<b>Read Out:</b> <i>${readoutCount.count} readouts served ${this.#os.EOL}</i>`;
-            stat += `<b>Searches:</b> <i>${searchCount.count} searches served ${this.#os.EOL}${this.#os.EOL}</i>`;
+            stat += `<b>Users:</b> <i>${usersCount.count?.toLocaleString()} users ${this.#os.EOL}</i>`;
+            stat += `<b>Verses:</b> <i>${verseCount.count?.toLocaleString()} verses served ${this.#os.EOL}</i>`;
+            stat += `<b>Read Out:</b> <i>${readoutCount.count?.toLocaleString()} readouts served ${this.#os.EOL}</i>`;
+            stat += `<b>Searches:</b> <i>${searchCount.count?.toLocaleString()} searches served ${this.#os.EOL}${this.#os.EOL}</i>`;
             stat += `<b>Channel:</b> @HolyWritDiscuss`;
             
             //send texting status
@@ -355,14 +355,14 @@ export default class ProcessMessage{
                 });
             }
         }
-        //Old Testament Chapters
+        //+++++++++++++++++++++Old Testament Chapters+++++++++++++++++++++++++++++++++++++++++++++++
         //Select old testament book (e.g. 'ot: prv')
         //Back to a book in the old testament (e.g. 'bbot: prv' back to proverbs chapters selection)
         if(query.substr(0, 3) == "ot:" || query.substr(0, 5) == "bbot:"){
             let bookAbbr = query.split(" ")[1];
             let book = this.#bible.abbrToBook(bookAbbr);
             let chapterCounter = await this.#bible.getChapterCount(book);
-            let keyboard = this.#getChapterKeyboard(bookAbbr, chapterCounter, "xot");
+            let keyboard = this.#getChapterKeyboard(bookAbbr, chapterCounter, "xot"); //xot is back to books in Old testament
             await this.#bot.editMessageText({
                 chat_id: content.chatID,
                 message_id: content.messageID,
@@ -482,9 +482,9 @@ export default class ProcessMessage{
             });
         }
         
-        //New Testament Chapters
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++New Testament Chapters++++++++++++++++++++++++++++++++++++++++
         //Select old testament book (e.g. 'nt: lk')
-        if(query.substr(0, 3) == "nt:"){
+        if(query.substring(0, 3) == "nt:" || query.substring(0, 5) == "bbnt:"){
             let bookAbbr = query.split(" ")[1];
             let book = this.#bible.abbrToBook(bookAbbr);
             let chapterCounter = await this.#bible.getChapterCount(book);
@@ -508,7 +508,107 @@ export default class ProcessMessage{
                 reply_markup: keyboard 
             });
         }
+        //selected new testament chapter e.g. 'cnt: lk 2' (luke 2)
+        else if(query.substr(0, 4) == "cnt:"){
+            let bookAbbr = query.split(" ")[1];
+            let chapter = +query.split(" ")[2];
+            let book = this.#bible.abbrToBook(bookAbbr);
+            let verseCounter = await this.#bible.getVerseCount(book, chapter);
+            let keyboard = this.#getVerseKeyboard(bookAbbr, chapter, verseCounter, 0, "xnt");
+            await this.#bot.editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${book} ${chapter}</b>: now choose the verse ⬇️`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //forward the chapter selection: e.g. 'fxnt: lk 2' (lk from chapter 2 upwards)
+        else if(query.substring(0, 5) == "fxnt:"){
+            let bookAbbr = query.split(" ")[1];
+            let start = +query.split(" ")[2];
+            let book = this.#bible.abbrToBook(bookAbbr);
+            let chapterCounter = await this.#bible.getChapterCount(book);
+            let keyboard = this.#getChapterKeyboard(bookAbbr, chapterCounter, "xnt", start);
+            await this.#bot.editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${book}</b>: now choose the chapter ⬇️`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //back chapter selection: e.g. 'bxot: gn 25' (genesis from chapter 25 downwards)
+        else if(query.substring(0, 5) == "bxnt:"){
+            let bookAbbr = query.split(" ")[1];
+            let matrixCount = this.#maxKeyBoardHeight * this.#maxKeyBoardWidth;
+            let start = (+query.split(" ")[2]-matrixCount <= 0)? 0 : (+query.split(" ")[2]-matrixCount);
+            let book = this.#bible.abbrToBook(bookAbbr);
+            let chapterCounter = await this.#bible.getChapterCount(book);
+            let keyboard = this.#getChapterKeyboard(bookAbbr, chapterCounter, "xnt", start);
+            await this.#bot.editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${book}</b>: now choose the chapter ⬇️`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //verse selected e.g. 'vcnt: lk 3 13'
+        else if(query.substr(0, 5) == "vcnt:"){
+            let bookAbbr = query.split(" ")[1];
+            let chapter = +query.split(" ")[2];
+            let book = this.#bible.abbrToBook(bookAbbr);
+            let verse = +query.split(" ")[3];
+            let v = await this.#bible.verse(`${book} ${chapter}:${verse}`);
+            if(v.encodedVerse != undefined){
+                //Save verse request
+                await this.#db.setVerse(`${book} ${chapter}:${verse}`);
 
+                await this.#bot.editMessageText({
+                    chat_id: content.chatID,
+                    message_id: content.messageID,
+                    text: v.encodedVerse,
+                    parse_mode: "HTML",
+                    reply_markup: v.keyboard
+                });
+            }
+        }
+        //forward the verse selection: e.g. 'fxvnt: lk 31 25' (luke chapter 31 from verse 26 upwards)
+        else if(query.substr(0, 6) == "fxvnt:"){
+            let bookAbbr = query.split(" ")[1];
+            let chapter = +query.split(" ")[2];
+            let start = +query.split(" ")[3];
+            let book = this.#bible.abbrToBook(bookAbbr);
+            let verseCounter = await this.#bible.getVerseCount(book, chapter);
+            let keyboard = this.#getVerseKeyboard(bookAbbr, chapter, verseCounter, start, "xnt");
+            await this.#bot.editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${book} ${chapter}</b>: now choose the verse ⬇️`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //back the verse selection: e.g. 'bxvnt: lk 31 25' (luke chapter 31 from verse 25 downwards)
+        else if(query.substr(0, 6) == "bxvnt:"){
+            let bookAbbr = query.split(" ")[1];
+            let chapter = +query.split(" ")[2];
+            let matrixCount = this.#maxKeyBoardHeight * this.#maxKeyBoardWidth;
+            let start = (+query.split(" ")[3]-matrixCount <= 0)? 0 : (+query.split(" ")[3]-matrixCount);
+            let book = this.#bible.abbrToBook(bookAbbr);
+            let verseCounter = await this.#bible.getVerseCount(book, chapter);
+            let keyboard = this.#getVerseKeyboard(bookAbbr, chapter, verseCounter, start, "xnt");
+            await this.#bot.editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${book} ${chapter}</b>: now choose the verse ⬇️`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+
+        //++++++++++++++++++++++++++++++++++++++Polly+++++++++++++++++++++++++++++++++++++++++++++
         //Read out: Polly (e.g. 'ro: lk 1 2')
         if(query.substr(0, 3) == "ro:"){
             const holyPolly: HolyPolly = new HolyPolly(); //do NOT move to constructor, takes a lot of time to initialise
@@ -536,6 +636,7 @@ export default class ProcessMessage{
             });
         }
 
+        //+++++++++++++++++++++++++++++++++++++++++++++Search+++++++++++++++++++++++++++++++++++++++++++
         //Search results
         //nextSearch: ${lengthToReturn} ${searchTerm}
         if(query.substr(0, 11) == "nextSearch:"){
@@ -597,6 +698,7 @@ export default class ProcessMessage{
             });
         }
 
+        //+++++++++++++++++++++++++++++++++++++++++++++++++++Edition Change+++++++++++++++++++++++++++++++++++
         //Edition change
         if(query.substr(0, 9) == "bEdition:"){
             let edition = query.substr(9).trim();
@@ -610,6 +712,7 @@ export default class ProcessMessage{
             });
         }
 
+        //++++++++++++++++++++++++++++++++++++++++++Readout Voice Change++++++++++++++++++++++++++++++++++++++++++
         //change readout voice
         if(query.substr(0, 8) == "cVoices:"){
             let voiceID = query.substr(8).trim();
@@ -653,13 +756,25 @@ export default class ProcessMessage{
         }
     }
 
-    #getVerseKeyboard(bookAbbr: string, chapter: number, verseCount: number,  start: number = 0): InlineKeyboardMarkup{
+    /**
+     * Generate the verse selection keyboard
+     * @param bookAbbr Book abbreviation (e.g. lk)
+     * @param chapter The chapter of the book to select from
+     * @param verseCount The number of verses in the chapter
+     * @param start Offset to start from. default to 0
+     * @param testament The testament of the book. Default to old testament (xot)
+     * @returns Returns the verse keyboard
+     */
+    #getVerseKeyboard(bookAbbr: string, chapter: number, verseCount: number,  start: number = 0, testament: string = "xot"): InlineKeyboardMarkup{
         let inline_keyboard = [];
         let colCount = 0, subKeyboard = [];
         let i = start;
         for(; i < verseCount; i++){
             if(colCount < this.#maxKeyBoardWidth){
-                subKeyboard.push({ text: i+1+'', callback_data: `vcot: ${bookAbbr} ${chapter} ${i+1}`});
+                if(testament == "xot")
+                    subKeyboard.push({ text: i+1+'', callback_data: `vcot: ${bookAbbr} ${chapter} ${i+1}`});
+                else
+                    subKeyboard.push({ text: i+1+'', callback_data: `vcnt: ${bookAbbr} ${chapter} ${i+1}`});
                 colCount++;
             }
             else{
@@ -667,7 +782,10 @@ export default class ProcessMessage{
                 subKeyboard = [];
                 //check if max height for keyboard is attained
                 if(inline_keyboard.length == this.#maxKeyBoardHeight){break;}
-                subKeyboard.push({ text: i+1+'', callback_data: `vcot: ${bookAbbr} ${chapter} ${i+1}`});
+                if(testament == "xot")
+                    subKeyboard.push({ text: i+1+'', callback_data: `vcot: ${bookAbbr} ${chapter} ${i+1}`});
+                else
+                    subKeyboard.push({ text: i+1+'', callback_data: `vcnt: ${bookAbbr} ${chapter} ${i+1}`});
                 colCount=1;
             }
         }
@@ -676,23 +794,40 @@ export default class ProcessMessage{
 
         //check if back and forward button are necessary
         if(verseCount > this.#maxKeyBoardHeight * this.#maxKeyBoardWidth){
-            inline_keyboard.push([{ text: "⏮ Back Verses", callback_data: `bxvot: ${bookAbbr} ${chapter} ${start}`}, { text: "Forward Verses ⏭", callback_data: `fxvot: ${bookAbbr} ${chapter} ${i}`}]);
+            if(testament == "xot")
+                inline_keyboard.push([{ text: "⏮ Back Verses", callback_data: `bxvot: ${bookAbbr} ${chapter} ${start}`}, { text: "Forward Verses ⏭", callback_data: `fxvot: ${bookAbbr} ${chapter} ${i}`}]);
+            else
+                inline_keyboard.push([{ text: "⏮ Back Verses", callback_data: `bxvnt: ${bookAbbr} ${chapter} ${start}`}, { text: "Forward Verses ⏭", callback_data: `fxvnt: ${bookAbbr} ${chapter} ${i}`}]);
         }
         
         //Back to Book
         let book = this.#bible.abbrToBook(bookAbbr);
-        inline_keyboard.push([{ text: `◀️ Go Back to ${book}`, callback_data: `bbot: ${bookAbbr}`}]);
+        if(testament == "xot")
+            inline_keyboard.push([{ text: `◀️ Go Back to ${book}`, callback_data: `bbot: ${bookAbbr}`}]);
+        else
+            inline_keyboard.push([{ text: `◀️ Go Back to ${book}`, callback_data: `bbnt: ${bookAbbr}`}]);
         let keyboard = {inline_keyboard};
         return keyboard;
     }
 
+    /**
+     * Generate the List of Chapters for a book
+     * @param bookAbbr The book abbrevaition (e.g. prv)
+     * @param chapterCount Number of chapters in the book
+     * @param testament Testament to go back to (xot for old testament, xnt for new testament)
+     * @param start Where to start the chapter selection from
+     * @returns Returns the keyboard for the chapter of the book
+     */
     #getChapterKeyboard(bookAbbr: string, chapterCount: number, testament: string, start: number = 0): InlineKeyboardMarkup{
         let inline_keyboard = [];
         let colCount = 0, subKeyboard = [];
         let i = start;
         for(; i < chapterCount; i++){
             if(colCount < this.#maxKeyBoardWidth){
-                subKeyboard.push({ text: i+1+'', callback_data: `cot: ${bookAbbr} ${i+1}`});
+                if(testament == "xot")
+                    subKeyboard.push({ text: i+1+'', callback_data: `cot: ${bookAbbr} ${i+1}`});
+                else
+                    subKeyboard.push({ text: i+1+'', callback_data: `cnt: ${bookAbbr} ${i+1}`});
                 colCount++;
             }
             else{
@@ -700,7 +835,11 @@ export default class ProcessMessage{
                 subKeyboard = [];
                 //check if max height for keyboard is attained
                 if(inline_keyboard.length == this.#maxKeyBoardHeight){break;}
-                subKeyboard.push({ text: i+1+'', callback_data: `cot: ${bookAbbr} ${i+1}`});
+                
+                if(testament == "xot")
+                    subKeyboard.push({ text: i+1+'', callback_data: `cot: ${bookAbbr} ${i+1}`});
+                else
+                    subKeyboard.push({ text: i+1+'', callback_data: `cnt: ${bookAbbr} ${i+1}`});
                 colCount=1;
             }
         }

@@ -98,7 +98,7 @@ class ProcessMessage {
 }
 exports.default = ProcessMessage;
 _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _ProcessMessage_os = new WeakMap(), _ProcessMessage_db = new WeakMap(), _ProcessMessage_m3oKey = new WeakMap(), _ProcessMessage_userID = new WeakMap(), _ProcessMessage_maxKeyBoardHeight = new WeakMap(), _ProcessMessage_maxKeyBoardWidth = new WeakMap(), _ProcessMessage_maxSearchResultLength = new WeakMap(), _ProcessMessage_bible = new WeakMap(), _ProcessMessage_changeVersion = new WeakMap(), _ProcessMessage_changeReadout = new WeakMap(), _ProcessMessage_donate = new WeakMap(), _ProcessMessage_removeKeyboard = new WeakMap(), _ProcessMessage_instances = new WeakSet(), _ProcessMessage_processMessage = function _ProcessMessage_processMessage(content) {
-    var _a, _b;
+    var _a, _b, _c, _d, _e, _f;
     return __awaiter(this, void 0, void 0, function* () {
         if (content.text == "/start") {
             let firstName = JSON.parse(yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").getChat(content.chatID))['result']['first_name'];
@@ -151,10 +151,10 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             let readoutCount = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getTotalReadoutCount();
             let searchCount = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getTotalSearchCount();
             let stat = "📊 <b>Bot Statistics</b>" + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL;
-            stat += `<b>Users:</b> <i>${usersCount.count} users ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
-            stat += `<b>Verses:</b> <i>${verseCount.count} verses served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
-            stat += `<b>Read Out:</b> <i>${readoutCount.count} readouts served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
-            stat += `<b>Searches:</b> <i>${searchCount.count} searches served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Users:</b> <i>${(_a = usersCount.count) === null || _a === void 0 ? void 0 : _a.toLocaleString()} users ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Verses:</b> <i>${(_b = verseCount.count) === null || _b === void 0 ? void 0 : _b.toLocaleString()} verses served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Read Out:</b> <i>${(_c = readoutCount.count) === null || _c === void 0 ? void 0 : _c.toLocaleString()} readouts served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Searches:</b> <i>${(_d = searchCount.count) === null || _d === void 0 ? void 0 : _d.toLocaleString()} searches served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
             stat += `<b>Channel:</b> @HolyWritDiscuss`;
             //send texting status
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendChatAction({ chat_id: content.chatID, action: 'typing' });
@@ -165,8 +165,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //Search
-        else if (((_a = content.text) === null || _a === void 0 ? void 0 : _a.substr(0, 3)) == "/s ") {
-            let searchTerm = (_b = content.text) === null || _b === void 0 ? void 0 : _b.substr(2).trim();
+        else if (((_e = content.text) === null || _e === void 0 ? void 0 : _e.substr(0, 3)) == "/s ") {
+            let searchTerm = (_f = content.text) === null || _f === void 0 ? void 0 : _f.substr(2).trim();
             const holySearch = new holySearch_1.default({ m3oKey: __classPrivateFieldGet(this, _ProcessMessage_m3oKey, "f"), userID: content.chatID + "" });
             let searchResults = yield holySearch.search(searchTerm);
             let lengthToReturn = Math.min(searchResults.length, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f"));
@@ -342,14 +342,14 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 });
             }
         }
-        //Old Testament Chapters
+        //+++++++++++++++++++++Old Testament Chapters+++++++++++++++++++++++++++++++++++++++++++++++
         //Select old testament book (e.g. 'ot: prv')
         //Back to a book in the old testament (e.g. 'bbot: prv' back to proverbs chapters selection)
         if (query.substr(0, 3) == "ot:" || query.substr(0, 5) == "bbot:") {
             let bookAbbr = query.split(" ")[1];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
             let chapterCounter = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").getChapterCount(book);
-            let keyboard = __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_getChapterKeyboard).call(this, bookAbbr, chapterCounter, "xot");
+            let keyboard = __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_getChapterKeyboard).call(this, bookAbbr, chapterCounter, "xot"); //xot is back to books in Old testament
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
                 chat_id: content.chatID,
                 message_id: content.messageID,
@@ -467,9 +467,9 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 reply_markup: keyboard
             });
         }
-        //New Testament Chapters
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++New Testament Chapters++++++++++++++++++++++++++++++++++++++++
         //Select old testament book (e.g. 'nt: lk')
-        if (query.substr(0, 3) == "nt:") {
+        if (query.substring(0, 3) == "nt:" || query.substring(0, 5) == "bbnt:") {
             let bookAbbr = query.split(" ")[1];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
             let chapterCounter = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").getChapterCount(book);
@@ -493,6 +493,105 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 reply_markup: keyboard
             });
         }
+        //selected new testament chapter e.g. 'cnt: lk 2' (luke 2)
+        else if (query.substr(0, 4) == "cnt:") {
+            let bookAbbr = query.split(" ")[1];
+            let chapter = +query.split(" ")[2];
+            let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
+            let verseCounter = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").getVerseCount(book, chapter);
+            let keyboard = __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_getVerseKeyboard).call(this, bookAbbr, chapter, verseCounter, 0, "xnt");
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${book} ${chapter}</b>: now choose the verse ⬇️`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //forward the chapter selection: e.g. 'fxnt: lk 2' (lk from chapter 2 upwards)
+        else if (query.substring(0, 5) == "fxnt:") {
+            let bookAbbr = query.split(" ")[1];
+            let start = +query.split(" ")[2];
+            let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
+            let chapterCounter = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").getChapterCount(book);
+            let keyboard = __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_getChapterKeyboard).call(this, bookAbbr, chapterCounter, "xnt", start);
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${book}</b>: now choose the chapter ⬇️`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //back chapter selection: e.g. 'bxot: gn 25' (genesis from chapter 25 downwards)
+        else if (query.substring(0, 5) == "bxnt:") {
+            let bookAbbr = query.split(" ")[1];
+            let matrixCount = __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardHeight, "f") * __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardWidth, "f");
+            let start = (+query.split(" ")[2] - matrixCount <= 0) ? 0 : (+query.split(" ")[2] - matrixCount);
+            let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
+            let chapterCounter = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").getChapterCount(book);
+            let keyboard = __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_getChapterKeyboard).call(this, bookAbbr, chapterCounter, "xnt", start);
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${book}</b>: now choose the chapter ⬇️`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //verse selected e.g. 'vcnt: lk 3 13'
+        else if (query.substr(0, 5) == "vcnt:") {
+            let bookAbbr = query.split(" ")[1];
+            let chapter = +query.split(" ")[2];
+            let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
+            let verse = +query.split(" ")[3];
+            let v = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").verse(`${book} ${chapter}:${verse}`);
+            if (v.encodedVerse != undefined) {
+                //Save verse request
+                yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").setVerse(`${book} ${chapter}:${verse}`);
+                yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
+                    chat_id: content.chatID,
+                    message_id: content.messageID,
+                    text: v.encodedVerse,
+                    parse_mode: "HTML",
+                    reply_markup: v.keyboard
+                });
+            }
+        }
+        //forward the verse selection: e.g. 'fxvnt: lk 31 25' (luke chapter 31 from verse 26 upwards)
+        else if (query.substr(0, 6) == "fxvnt:") {
+            let bookAbbr = query.split(" ")[1];
+            let chapter = +query.split(" ")[2];
+            let start = +query.split(" ")[3];
+            let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
+            let verseCounter = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").getVerseCount(book, chapter);
+            let keyboard = __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_getVerseKeyboard).call(this, bookAbbr, chapter, verseCounter, start, "xnt");
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${book} ${chapter}</b>: now choose the verse ⬇️`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //back the verse selection: e.g. 'bxvnt: lk 31 25' (luke chapter 31 from verse 25 downwards)
+        else if (query.substr(0, 6) == "bxvnt:") {
+            let bookAbbr = query.split(" ")[1];
+            let chapter = +query.split(" ")[2];
+            let matrixCount = __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardHeight, "f") * __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardWidth, "f");
+            let start = (+query.split(" ")[3] - matrixCount <= 0) ? 0 : (+query.split(" ")[3] - matrixCount);
+            let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
+            let verseCounter = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").getVerseCount(book, chapter);
+            let keyboard = __classPrivateFieldGet(this, _ProcessMessage_instances, "m", _ProcessMessage_getVerseKeyboard).call(this, bookAbbr, chapter, verseCounter, start, "xnt");
+            yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
+                chat_id: content.chatID,
+                message_id: content.messageID,
+                text: `<b>${book} ${chapter}</b>: now choose the verse ⬇️`,
+                parse_mode: "HTML",
+                reply_markup: keyboard
+            });
+        }
+        //++++++++++++++++++++++++++++++++++++++Polly+++++++++++++++++++++++++++++++++++++++++++++
         //Read out: Polly (e.g. 'ro: lk 1 2')
         if (query.substr(0, 3) == "ro:") {
             const holyPolly = new holyPolly_1.default(); //do NOT move to constructor, takes a lot of time to initialise
@@ -515,6 +614,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 reply_to_message_id: content.messageID
             });
         }
+        //+++++++++++++++++++++++++++++++++++++++++++++Search+++++++++++++++++++++++++++++++++++++++++++
         //Search results
         //nextSearch: ${lengthToReturn} ${searchTerm}
         if (query.substr(0, 11) == "nextSearch:") {
@@ -564,6 +664,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 reply_markup: keyboard
             });
         }
+        //+++++++++++++++++++++++++++++++++++++++++++++++++++Edition Change+++++++++++++++++++++++++++++++++++
         //Edition change
         if (query.substr(0, 9) == "bEdition:") {
             let edition = query.substr(9).trim();
@@ -576,6 +677,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
                 parse_mode: "HTML"
             });
         }
+        //++++++++++++++++++++++++++++++++++++++++++Readout Voice Change++++++++++++++++++++++++++++++++++++++++++
         //change readout voice
         if (query.substr(0, 8) == "cVoices:") {
             let voiceID = query.substr(8).trim();
@@ -611,13 +713,16 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").createUser(userID);
         }
     });
-}, _ProcessMessage_getVerseKeyboard = function _ProcessMessage_getVerseKeyboard(bookAbbr, chapter, verseCount, start = 0) {
+}, _ProcessMessage_getVerseKeyboard = function _ProcessMessage_getVerseKeyboard(bookAbbr, chapter, verseCount, start = 0, testament = "xot") {
     let inline_keyboard = [];
     let colCount = 0, subKeyboard = [];
     let i = start;
     for (; i < verseCount; i++) {
         if (colCount < __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardWidth, "f")) {
-            subKeyboard.push({ text: i + 1 + '', callback_data: `vcot: ${bookAbbr} ${chapter} ${i + 1}` });
+            if (testament == "xot")
+                subKeyboard.push({ text: i + 1 + '', callback_data: `vcot: ${bookAbbr} ${chapter} ${i + 1}` });
+            else
+                subKeyboard.push({ text: i + 1 + '', callback_data: `vcnt: ${bookAbbr} ${chapter} ${i + 1}` });
             colCount++;
         }
         else {
@@ -627,7 +732,10 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             if (inline_keyboard.length == __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardHeight, "f")) {
                 break;
             }
-            subKeyboard.push({ text: i + 1 + '', callback_data: `vcot: ${bookAbbr} ${chapter} ${i + 1}` });
+            if (testament == "xot")
+                subKeyboard.push({ text: i + 1 + '', callback_data: `vcot: ${bookAbbr} ${chapter} ${i + 1}` });
+            else
+                subKeyboard.push({ text: i + 1 + '', callback_data: `vcnt: ${bookAbbr} ${chapter} ${i + 1}` });
             colCount = 1;
         }
     }
@@ -637,11 +745,17 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
     }
     //check if back and forward button are necessary
     if (verseCount > __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardHeight, "f") * __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardWidth, "f")) {
-        inline_keyboard.push([{ text: "⏮ Back Verses", callback_data: `bxvot: ${bookAbbr} ${chapter} ${start}` }, { text: "Forward Verses ⏭", callback_data: `fxvot: ${bookAbbr} ${chapter} ${i}` }]);
+        if (testament == "xot")
+            inline_keyboard.push([{ text: "⏮ Back Verses", callback_data: `bxvot: ${bookAbbr} ${chapter} ${start}` }, { text: "Forward Verses ⏭", callback_data: `fxvot: ${bookAbbr} ${chapter} ${i}` }]);
+        else
+            inline_keyboard.push([{ text: "⏮ Back Verses", callback_data: `bxvnt: ${bookAbbr} ${chapter} ${start}` }, { text: "Forward Verses ⏭", callback_data: `fxvnt: ${bookAbbr} ${chapter} ${i}` }]);
     }
     //Back to Book
     let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
-    inline_keyboard.push([{ text: `◀️ Go Back to ${book}`, callback_data: `bbot: ${bookAbbr}` }]);
+    if (testament == "xot")
+        inline_keyboard.push([{ text: `◀️ Go Back to ${book}`, callback_data: `bbot: ${bookAbbr}` }]);
+    else
+        inline_keyboard.push([{ text: `◀️ Go Back to ${book}`, callback_data: `bbnt: ${bookAbbr}` }]);
     let keyboard = { inline_keyboard };
     return keyboard;
 }, _ProcessMessage_getChapterKeyboard = function _ProcessMessage_getChapterKeyboard(bookAbbr, chapterCount, testament, start = 0) {
@@ -650,7 +764,10 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
     let i = start;
     for (; i < chapterCount; i++) {
         if (colCount < __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardWidth, "f")) {
-            subKeyboard.push({ text: i + 1 + '', callback_data: `cot: ${bookAbbr} ${i + 1}` });
+            if (testament == "xot")
+                subKeyboard.push({ text: i + 1 + '', callback_data: `cot: ${bookAbbr} ${i + 1}` });
+            else
+                subKeyboard.push({ text: i + 1 + '', callback_data: `cnt: ${bookAbbr} ${i + 1}` });
             colCount++;
         }
         else {
@@ -660,7 +777,10 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             if (inline_keyboard.length == __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardHeight, "f")) {
                 break;
             }
-            subKeyboard.push({ text: i + 1 + '', callback_data: `cot: ${bookAbbr} ${i + 1}` });
+            if (testament == "xot")
+                subKeyboard.push({ text: i + 1 + '', callback_data: `cot: ${bookAbbr} ${i + 1}` });
+            else
+                subKeyboard.push({ text: i + 1 + '', callback_data: `cnt: ${bookAbbr} ${i + 1}` });
             colCount = 1;
         }
     }
