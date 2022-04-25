@@ -21,6 +21,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 };
 var _HolyPolly_AWS, _HolyPolly_Polly, _HolyPolly_fs;
 Object.defineProperty(exports, "__esModule", { value: true });
+const id3 = require("./tag");
 class HolyPolly {
     /**
      * Fire up the Holy Polly :)
@@ -59,9 +60,18 @@ class HolyPolly {
             let data = yield __classPrivateFieldGet(this, _HolyPolly_Polly, "f").synthesizeSpeech(params).promise();
             let promise;
             promise = new Promise((resolve, reject) => {
-                __classPrivateFieldGet(this, _HolyPolly_fs, "f").writeFile(`/tmp/${filename}.mp3`, data.AudioStream, () => {
+                __classPrivateFieldGet(this, _HolyPolly_fs, "f").writeFile(`/tmp/${filename}.mp3`, data.AudioStream, () => __awaiter(this, void 0, void 0, function* () {
+                    //Write ID3 tag
+                    const tags = {
+                        title: filename,
+                        artist: "Holy Writ [https://t.me/HolyWritBot]",
+                        album: "The Bible",
+                        APIC: './albumart.jpg',
+                    };
+                    yield id3.tag(`/tmp/${filename}.mp3`, tags);
+                    //resolve 
                     resolve(`/tmp/${filename}.mp3`);
-                });
+                }));
             });
             return promise;
         });

@@ -17,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "mongodb": "^4.5.0",
+    "node-id3": "^0.2.3",
     "prosperly": "^1.0.1"
   }
 }

@@ -1,3 +1,5 @@
+const id3 = require("./tag");
+
 export default class HolyPolly{
     #AWS; #Polly; #fs;
     
@@ -40,7 +42,17 @@ export default class HolyPolly{
         let data = await this.#Polly.synthesizeSpeech(params).promise();
         let promise;
         promise = new Promise((resolve, reject)=>{
-            this.#fs.writeFile(`/tmp/${filename}.mp3`, data.AudioStream, ()=>{
+            this.#fs.writeFile(`/tmp/${filename}.mp3`, data.AudioStream, async ()=>{
+                //Write ID3 tag
+                const tags = {
+                    title: filename,
+                    artist: "Holy Writ [https://t.me/HolyWritBot]",
+                    album: "The Bible",
+                    APIC: './albumart.jpg',
+                };
+                await id3.tag(`/tmp/${filename}.mp3`, tags);
+                
+                //resolve 
                 resolve(`/tmp/${filename}.mp3`);
             });
         });
