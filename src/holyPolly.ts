@@ -1,7 +1,9 @@
 export default class HolyPolly{
-    
     #AWS; #Polly; #fs;
-
+    
+    /**
+     * Fire up the Holy Polly :)
+     */
     constructor(){
         // Load the SDK
         this.#AWS = require('aws-sdk');
@@ -46,9 +48,3 @@ export default class HolyPolly{
     }
 }
 module.exports = HolyPolly;
-
-
-
-
-
-

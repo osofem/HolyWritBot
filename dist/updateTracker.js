@@ -8,12 +8,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _UpdateTracker_dbName, _UpdateTracker_cacheCollection, _UpdateTracker_monClient;
 Object.defineProperty(exports, "__esModule", { value: true });
-const cache_1 = require("m3o/cache");
+const mongodb_1 = require("mongodb");
 class UpdateTracker {
     constructor(content) {
-        this.cachePrefix = process.env.cachePrefix;
-        this.cache = new cache_1.CacheService(content.m3OKey);
+        _UpdateTracker_dbName.set(this, process.env.dbName ? process.env.dbName : "xnHolyWrit");
+        _UpdateTracker_cacheCollection.set(this, process.env.cachePrefix ? process.env.cachePrefix : "xnHolyWritCacheUpdate");
+        _UpdateTracker_monClient.set(this, void 0);
+        __classPrivateFieldSet(this, _UpdateTracker_monClient, new mongodb_1.MongoClient(content.conString), "f");
+    }
+    /**
+     * Connect to the database
+     */
+    connectDB() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield __classPrivateFieldGet(this, _UpdateTracker_monClient, "f").connect();
+            return __classPrivateFieldGet(this, _UpdateTracker_monClient, "f").db(__classPrivateFieldGet(this, _UpdateTracker_dbName, "f"));
+        });
     }
     /**
      * Retrieves update from cache
@@ -22,26 +45,29 @@ class UpdateTracker {
      */
     getUpdate(updateID) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.cache.get({
-                key: this.cachePrefix + updateID
-            });
+            //Connect to the cache collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _UpdateTracker_cacheCollection, "f"));
+            const cache = yield collection.findOne({ updateID });
+            __classPrivateFieldGet(this, _UpdateTracker_monClient, "f").close();
+            return cache;
         });
     }
     /**
      * Save an update to the cache
      * @param updateID update ID to save
      * @param update update contain to save
-     * @returns Return {"status": "ok"} on success
+     * @returns Return updated document
      */
     setUpdate(updateID, update) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.cache.set({
-                key: this.cachePrefix + updateID,
-                value: update,
-                ttl: 7 * 24 * 60 * 60 // 7days validity. Automatically deletes after 7 days
-            });
+            //Connect to the cache collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _UpdateTracker_cacheCollection, "f"));
+            const result = yield collection.updateOne({ updateID }, { $set: { update, ttl: +new Date() } }, { upsert: true });
+            __classPrivateFieldGet(this, _UpdateTracker_monClient, "f").close();
+            return result;
         });
     }
 }
 exports.default = UpdateTracker;
+_UpdateTracker_dbName = new WeakMap(), _UpdateTracker_cacheCollection = new WeakMap(), _UpdateTracker_monClient = new WeakMap();
 module.exports = UpdateTracker;

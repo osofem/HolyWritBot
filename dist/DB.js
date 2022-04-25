@@ -1,23 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -27,131 +8,159 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
 var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
     if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
     if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
     return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 };
-var _DB_usersTable, _DB_versesCountTable, _DB_readoutCountTable, _DB_searchCountTable;
+var _DB_monClient, _DB_dbName, _DB_usersCollection, _DB_versesCountCollection, _DB_readoutCountCollection, _DB_searchCountCollection;
 Object.defineProperty(exports, "__esModule", { value: true });
-const db = __importStar(require("m3o/db"));
+const mongodb_1 = require("mongodb");
 class DB {
     /**
-     * Constructor for the M3O DB service
-     * @param key M3O service API key
+     * Constructor for the MongoDB service
+     * @param conString MongoDBconnection string
      */
-    constructor(key) {
-        _DB_usersTable.set(this, process.env.usersTable); //?process.env.usersTable:"devHolyWritUsers";
-        _DB_versesCountTable.set(this, process.env.versesCountTable);
-        _DB_readoutCountTable.set(this, process.env.readoutCountTable);
-        _DB_searchCountTable.set(this, process.env.searchCountTable);
-        this.apiKey = key;
-        this.dbService = new db.DbService(this.apiKey);
+    constructor(conString) {
+        _DB_monClient.set(this, void 0);
+        _DB_dbName.set(this, process.env.dbName ? process.env.dbName : "xnHolyWrit");
+        _DB_usersCollection.set(this, process.env.usersTable ? process.env.usersTable : "xnUsers");
+        _DB_versesCountCollection.set(this, process.env.versesCountTable ? process.env.versesCountTable : "xnVerseCount");
+        _DB_readoutCountCollection.set(this, process.env.readoutCountTable ? process.env.readoutCountTable : "xnReadoutCount");
+        _DB_searchCountCollection.set(this, process.env.searchCountTable ? process.env.searchCountTable : "xnSearchCount");
+        __classPrivateFieldSet(this, _DB_monClient, new mongodb_1.MongoClient(conString), "f");
+    }
+    /**
+     * Connect to the database
+     */
+    connectDB() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield __classPrivateFieldGet(this, _DB_monClient, "f").connect();
+            return __classPrivateFieldGet(this, _DB_monClient, "f").db(__classPrivateFieldGet(this, _DB_dbName, "f"));
+        });
     }
     /***+++++++++++++++++++++
         USER
     ++++++++++++++++++++++++***/
     /**
-     * Create record of a user in the database
+     * Create document of a user in the collection
      * @param userID ID of the user
      * @returns Returns the record created
      */
     createUser(userID) {
         return __awaiter(this, void 0, void 0, function* () {
-            //Create the create request
+            //Connect to the user collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_usersCollection, "f"));
+            //Create the document
             let record = {
-                id: userID,
+                userID,
                 firstAccess: +new Date(),
                 lastAccess: +new Date(),
                 edition: 'kjv',
                 voiceID: "ID1"
             };
-            return yield this.dbService.create({ record, table: __classPrivateFieldGet(this, _DB_usersTable, "f") });
+            //Save new user and close the connection
+            const newUser = yield collection.insertOne(record);
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return newUser;
         });
     }
     /**
-     * Retrive a user from the database
+     * Retrive a user from the users collection
      * @param userID ID of the user
-     * @returns Returns a record of the user from the database
+     * @returns Returns a document of the user from the collection
      */
     getUser(userID) {
         return __awaiter(this, void 0, void 0, function* () {
+            //Connect to the user collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_usersCollection, "f"));
             //Create the read request
-            let record = {
-                query: "id == \"" + userID + "\"",
-                table: __classPrivateFieldGet(this, _DB_usersTable, "f")
+            let filter = {
+                userID
             };
-            return yield this.dbService.read(record);
+            //Retrieve the user and close the connection
+            const user = yield collection.findOne(filter);
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return user;
         });
     }
     /**
-     * Updates a user infomation in the database
+     * Updates a user infomation in the collection
      * @param userID ID of the user
-     * @returns Returns a record of the user from the database
+     * @param content contents to update
+     * @returns Returns a document of the updated user
      */
     updateUser(userID, content) {
         return __awaiter(this, void 0, void 0, function* () {
-            //Create the read request
-            let record = Object.assign({ id: userID }, content);
-            return yield this.dbService.update({ record, table: __classPrivateFieldGet(this, _DB_usersTable, "f") });
+            //Connect to the user collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_usersCollection, "f"));
+            const updatedUser = yield collection.updateOne({ userID }, { $set: Object.assign({}, content) }, { upsert: true });
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return updatedUser;
         });
     }
     /**
      * Gets the total number of users for the bot
-     * @returns Returns the total bot user
+     * @returns Returns the total bot users
      */
     getTotalUsers() {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.dbService.count({ table: __classPrivateFieldGet(this, _DB_usersTable, "f") });
+            //Connect to the user collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_usersCollection, "f"));
+            const totalUsers = yield collection.countDocuments();
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return totalUsers;
         });
     }
     /**
      * Change the bible edition for a user
      * @param userID User ID
      * @param edition Edition to change to
-     * @returns Returns the chnaged user data
+     * @returns Returns the updated user
      */
     changeEdition(userID, edition) {
         return __awaiter(this, void 0, void 0, function* () {
-            //Create the read request
-            let record = {
-                id: userID,
-                edition
-            };
-            return yield this.dbService.update({ record, table: __classPrivateFieldGet(this, _DB_usersTable, "f") });
+            //Connect to the user collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_usersCollection, "f"));
+            const updatedUser = yield collection.updateOne({ userID }, { $set: { edition } }, { upsert: true });
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return updatedUser;
         });
     }
     /**
      * Change the readout voice
      * @param userID User ID
      * @param voiceID ID of voice to change to
-     * @returns Returns the chnaged user data
+     * @returns Returns the updated user
      */
     changeVoiceReadout(userID, voiceID) {
         return __awaiter(this, void 0, void 0, function* () {
-            //Create the read request
-            let record = {
-                id: userID,
-                voiceID
-            };
-            return yield this.dbService.update({ record, table: __classPrivateFieldGet(this, _DB_usersTable, "f") });
+            //Connect to the user collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_usersCollection, "f"));
+            const updatedUser = yield collection.updateOne({ userID }, { $set: { voiceID } }, { upsert: true });
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return updatedUser;
         });
     }
     /**
      * Get the edition for the user
      * @param userID ID of the user
-     * @returns Returns the current edition the user selected
+     * @returns Returns the current edition the selected user
      */
     getCurrentEdition(userID) {
         return __awaiter(this, void 0, void 0, function* () {
-            //Create the read request
-            let record = {
-                query: "id == \"" + userID + "\"",
-                table: __classPrivateFieldGet(this, _DB_usersTable, "f")
-            };
-            let result = yield this.dbService.read(record);
-            if (result["records"] && result["records"][0] != undefined)
-                return result["records"][0].edition != undefined ? result["records"][0].edition : 'kjv';
+            //Connect to the user collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_usersCollection, "f"));
+            const user = yield collection.findOne({ userID });
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            if (user != null)
+                return user['edition'] != undefined ? user['edition'] : 'kjv';
             else
                 return "kjv";
         });
@@ -159,18 +168,16 @@ class DB {
     /**
      * Get the current voice ID
      * @param userID ID of the user
-     * @returns Returns the current voice ID the user selected
+     * @returns Returns the current voice ID the selected user
      */
     getCurrentVoiceID(userID) {
         return __awaiter(this, void 0, void 0, function* () {
-            //Create the read request
-            let record = {
-                query: "id == \"" + userID + "\"",
-                table: __classPrivateFieldGet(this, _DB_usersTable, "f")
-            };
-            let result = yield this.dbService.read(record);
-            if (result["records"])
-                return result["records"][0].voiceID != undefined ? result["records"][0].voiceID : 'ID1';
+            //Connect to the user collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_usersCollection, "f"));
+            const user = yield collection.findOne({ userID });
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            if (user != null)
+                return user['voiceID'] != undefined ? user['voiceID'] : 'ID1';
             else
                 return "ID1";
         });
@@ -179,78 +186,93 @@ class DB {
         VERSE COUNT
     ++++++++++++++++++++++++***/
     /**
-     * Save the verse request to database
+     * Save the verse request to collection
      * @param verse Verse requested
-     * @returns Returns the total verse count
+     * @returns Returns inserted document
      */
     setVerse(verse) {
         return __awaiter(this, void 0, void 0, function* () {
-            //Create the create request
-            let record = {
-                verse,
-                time: +new Date()
-            };
-            return yield this.dbService.create({ record, table: __classPrivateFieldGet(this, _DB_versesCountTable, "f") });
+            //Connect to the verseCount collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_versesCountCollection, "f"));
+            const result = yield collection.insertOne({ verse, time: +new Date() });
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return result;
         });
     }
+    /**
+     * Get total verses searched
+     * @returns Returns total number of verses searched
+     */
     getTotalVerseCount() {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.dbService.count({ table: __classPrivateFieldGet(this, _DB_versesCountTable, "f") });
+            //Connect to the verseCount collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_versesCountCollection, "f"));
+            const totalVerses = yield collection.countDocuments();
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return totalVerses;
         });
     }
     /***+++++++++++++++++++++
         READOUT COUNT
     ++++++++++++++++++++++++***/
     /**
-     * Save the readout requests to database
+     * Save the readout requests to the collection
      * @param verse Verse to readout
-     * @returns Returns the saved item
+     * @returns Returns the saved document
      */
     setReadout(verse) {
         return __awaiter(this, void 0, void 0, function* () {
-            //Create the create request
-            let record = {
-                verse,
-                time: +new Date()
-            };
-            return yield this.dbService.create({ record, table: __classPrivateFieldGet(this, _DB_readoutCountTable, "f") });
+            //Connect to the readoutCount collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_readoutCountCollection, "f"));
+            const result = yield collection.insertOne({ verse, time: +new Date() });
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return result;
         });
     }
     /**
+     * Gets the total readouts requested
      * @returns Returns the total readout count
      */
     getTotalReadoutCount() {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.dbService.count({ table: __classPrivateFieldGet(this, _DB_readoutCountTable, "f") });
+            //Connect to the readoutCount collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_readoutCountCollection, "f"));
+            const totalReadout = yield collection.countDocuments();
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return totalReadout;
         });
     }
     /***+++++++++++++++++++++
         SEARCH COUNT
     ++++++++++++++++++++++++***/
     /**
-     * Save the search term to database
+     * Save the search term to the collection
      * @param searchTerm Search term
      * @returns Returns saved item
      */
     setSearch(searchTerm) {
         return __awaiter(this, void 0, void 0, function* () {
-            //Create the create request
-            let record = {
-                searchTerm,
-                time: +new Date()
-            };
-            return yield this.dbService.create({ record, table: __classPrivateFieldGet(this, _DB_searchCountTable, "f") });
+            //Connect to the SearchCount collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_searchCountCollection, "f"));
+            const result = yield collection.insertOne({ searchTerm, time: +new Date() });
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return result;
         });
     }
     /**
+     * Gets the total number of search performed
      * @returns Returns the total search saved
      */
     getTotalSearchCount() {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.dbService.count({ table: __classPrivateFieldGet(this, _DB_searchCountTable, "f") });
+            //Connect to the SearchCount collection
+            const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_searchCountCollection, "f"));
+            const totalSearch = yield collection.countDocuments();
+            __classPrivateFieldGet(this, _DB_monClient, "f").close();
+            return totalSearch;
         });
     }
 }
 exports.default = DB;
-_DB_usersTable = new WeakMap(), _DB_versesCountTable = new WeakMap(), _DB_readoutCountTable = new WeakMap(), _DB_searchCountTable = new WeakMap();
+_DB_monClient = new WeakMap(), _DB_dbName = new WeakMap(), _DB_usersCollection = new WeakMap(), _DB_versesCountCollection = new WeakMap(), _DB_readoutCountCollection = new WeakMap(), _DB_searchCountCollection = new WeakMap();
 module.exports = DB;

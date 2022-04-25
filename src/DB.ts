@@ -1,19 +1,29 @@
-import * as db from "m3o/db";
+import { InsertOneResult, MongoClient, UpdateResult, WithId } from 'mongodb'
 
 export default class DB{
-    apiKey: string; dbService;
-    #usersTable = process.env.usersTable;//?process.env.usersTable:"devHolyWritUsers";
-    #versesCountTable = process.env.versesCountTable;
-    #readoutCountTable = process.env.readoutCountTable;
-    #searchCountTable = process.env.searchCountTable;
+    #monClient;
+    #dbName = process.env.dbName?process.env.dbName:"xnHolyWrit";
+    #usersCollection = process.env.usersTable?process.env.usersTable:"xnUsers";
+    #versesCountCollection = process.env.versesCountTable?process.env.versesCountTable:"xnVerseCount";
+    #readoutCountCollection = process.env.readoutCountTable?process.env.readoutCountTable:"xnReadoutCount";
+    #searchCountCollection = process.env.searchCountTable?process.env.searchCountTable:"xnSearchCount";
+
 
     /**
-     * Constructor for the M3O DB service
-     * @param key M3O service API key
+     * Constructor for the MongoDB service
+     * @param conString MongoDBconnection string
      */
-    constructor(key: string){
-        this.apiKey = key;
-        this.dbService = new db.DbService(this.apiKey);
+    constructor(conString: string){
+        this.#monClient = new MongoClient(conString);
+    }
+
+
+    /**
+     * Connect to the database
+     */
+    async connectDB(){
+        await this.#monClient.connect();
+        return this.#monClient.db(this.#dbName);
     }
 
 
@@ -22,106 +32,127 @@ export default class DB{
     ++++++++++++++++++++++++***/
 
     /**
-     * Create record of a user in the database
+     * Create document of a user in the collection
      * @param userID ID of the user
      * @returns Returns the record created
      */
-    async createUser(userID: string){
-        //Create the create request
+    async createUser(userID: string): Promise<InsertOneResult<Document>>{
+        //Connect to the user collection
+        const collection = (await this.connectDB()).collection(this.#usersCollection);
+
+        //Create the document
         let record = {
-            id: userID,
+            userID,
             firstAccess: +new Date(),
             lastAccess: +new Date(),
             edition: 'kjv',
             voiceID: "ID1"
         };
 
-        return await this.dbService.create({record, table: this.#usersTable});
+        //Save new user and close the connection
+        const newUser = await collection.insertOne(record);
+        this.#monClient.close();
+
+        return newUser
     }
 
     /**
-     * Retrive a user from the database
+     * Retrive a user from the users collection
      * @param userID ID of the user
-     * @returns Returns a record of the user from the database
+     * @returns Returns a document of the user from the collection
      */
-    async getUser(userID: string): Promise<db.ReadResponse>{
+    async getUser(userID: string){
+        //Connect to the user collection
+        const collection = (await this.connectDB()).collection(this.#usersCollection);
+
         //Create the read request
-        let record: db.ReadRequest = {
-            query: "id == \""+userID+"\"",
-            table: this.#usersTable
+        let filter = {
+            userID
         };
-        return await this.dbService.read(record);
+
+        //Retrieve the user and close the connection
+        const user = await collection.findOne(filter);
+        this.#monClient.close();
+
+        return user;
     }
 
     /**
-     * Updates a user infomation in the database
+     * Updates a user infomation in the collection
      * @param userID ID of the user
-     * @returns Returns a record of the user from the database
+     * @param content contents to update
+     * @returns Returns a document of the updated user
      */
-     async updateUser(userID: string, content: any): Promise<db.UpdateResponse>{
-        //Create the read request
-        let record: db.UpdateRequest = {
-            id: userID,
-            ...content
-        };
-        return await this.dbService.update({record, table: this.#usersTable});
+     async updateUser(userID: string, content: any): Promise<UpdateResult> {
+        //Connect to the user collection
+        const collection = (await this.connectDB()).collection(this.#usersCollection);
+
+        const updatedUser = await collection.updateOne({userID}, {$set: {...content}}, { upsert: true });
+        this.#monClient.close();
+
+        return updatedUser;
     }
 
     /**
      * Gets the total number of users for the bot
-     * @returns Returns the total bot user
+     * @returns Returns the total bot users
      */
-    async getTotalUsers(): Promise<db.CountResponse>{
-        return this.dbService.count({table: this.#usersTable});
+    async getTotalUsers(): Promise<number>{
+        //Connect to the user collection
+        const collection = (await this.connectDB()).collection(this.#usersCollection);
+
+        const totalUsers = await collection.countDocuments();
+        this.#monClient.close();
+
+        return totalUsers;
     }
 
     /**
      * Change the bible edition for a user
      * @param userID User ID
      * @param edition Edition to change to
-     * @returns Returns the chnaged user data
+     * @returns Returns the updated user
      */
-    async changeEdition(userID: string, edition: string){
-        //Create the read request
-        let record = {
-            id: userID,
-            edition
-        };
-        return await this.dbService.update({record, table: this.#usersTable});
+    async changeEdition(userID: string, edition: string): Promise<UpdateResult>{
+        //Connect to the user collection
+        const collection = (await this.connectDB()).collection(this.#usersCollection);
+
+        const updatedUser = await collection.updateOne({userID}, {$set : {edition}}, {upsert: true});
+        this.#monClient.close();
+        
+        return updatedUser;
     }
 
     /**
      * Change the readout voice
      * @param userID User ID
      * @param voiceID ID of voice to change to
-     * @returns Returns the chnaged user data
+     * @returns Returns the updated user
      */
-     async changeVoiceReadout(userID: string, voiceID: string){
-        //Create the read request
-        let record = {
-            id: userID,
-            voiceID
-        };
-        return await this.dbService.update({record, table: this.#usersTable});
+     async changeVoiceReadout(userID: string, voiceID: string): Promise<UpdateResult>{
+        //Connect to the user collection
+        const collection = (await this.connectDB()).collection(this.#usersCollection);
+
+        const updatedUser = await collection.updateOne({userID}, {$set: {voiceID}}, {upsert: true});
+        this.#monClient.close();
+        
+        return updatedUser;
     }
     
     
     /**
      * Get the edition for the user
      * @param userID ID of the user
-     * @returns Returns the current edition the user selected
+     * @returns Returns the current edition the selected user
      */
     async getCurrentEdition(userID: string): Promise<string>{
-        //Create the read request
-        let record: db.ReadRequest = {
-            query: "id == \""+userID+"\"",
-            table: this.#usersTable
-        };
+        //Connect to the user collection
+        const collection = (await this.connectDB()).collection(this.#usersCollection);
+        const user = await collection.findOne({userID});
+        this.#monClient.close();
 
-        let result = await this.dbService.read(record);
-
-        if(result["records"] && result["records"][0] != undefined)
-            return result["records"][0].edition!=undefined?result["records"][0].edition:'kjv';
+        if(user != null)
+            return user['edition']!=undefined?user['edition']:'kjv';
         else
             return "kjv";
     }
@@ -129,19 +160,16 @@ export default class DB{
     /**
      * Get the current voice ID
      * @param userID ID of the user
-     * @returns Returns the current voice ID the user selected
+     * @returns Returns the current voice ID the selected user
      */
      async getCurrentVoiceID(userID: string): Promise<string>{
-        //Create the read request
-        let record: db.ReadRequest = {
-            query: "id == \""+userID+"\"",
-            table: this.#usersTable
-        };
-    
-        let result = await this.dbService.read(record);
+        //Connect to the user collection
+        const collection = (await this.connectDB()).collection(this.#usersCollection);
+        const user = await collection.findOne({userID});
+        this.#monClient.close();
 
-        if(result["records"])
-            return result["records"][0].voiceID!=undefined?result["records"][0].voiceID:'ID1';
+        if(user != null)
+            return user['voiceID']!=undefined?user['voiceID']:'ID1';
         else
             return "ID1";
     }
@@ -151,22 +179,29 @@ export default class DB{
     ++++++++++++++++++++++++***/
 
     /**
-     * Save the verse request to database
+     * Save the verse request to collection
      * @param verse Verse requested
-     * @returns Returns the total verse count
+     * @returns Returns inserted document
      */
-    async setVerse(verse: string){
-        //Create the create request
-        let record = {
-            verse,
-            time: +new Date()
-        };
+    async setVerse(verse: string): Promise<InsertOneResult<Document>>{
+        //Connect to the verseCount collection
+        const collection = (await this.connectDB()).collection(this.#versesCountCollection);
+        const result = await collection.insertOne({verse, time: +new Date()});
+        this.#monClient.close();
 
-        return await this.dbService.create({record, table: this.#versesCountTable});
+        return result;
     }
 
-    async getTotalVerseCount(){
-        return this.dbService.count({table: this.#versesCountTable});
+    /**
+     * Get total verses searched
+     * @returns Returns total number of verses searched
+     */
+    async getTotalVerseCount(): Promise<number> {
+        //Connect to the verseCount collection
+        const collection = (await this.connectDB()).collection(this.#versesCountCollection);
+        const totalVerses = await collection.countDocuments();
+        this.#monClient.close();
+        return totalVerses;
     }
 
     /***+++++++++++++++++++++
@@ -174,25 +209,29 @@ export default class DB{
     ++++++++++++++++++++++++***/
 
     /**
-     * Save the readout requests to database
+     * Save the readout requests to the collection
      * @param verse Verse to readout
-     * @returns Returns the saved item
+     * @returns Returns the saved document
      */
-    async setReadout(verse: string){
-        //Create the create request
-        let record = {
-            verse,
-            time: +new Date()
-        };
+    async setReadout(verse: string): Promise<InsertOneResult<Document>>{
+        //Connect to the readoutCount collection
+        const collection = (await this.connectDB()).collection(this.#readoutCountCollection);
+        const result = await collection.insertOne({verse, time: +new Date()});
+        this.#monClient.close();
 
-        return await this.dbService.create({record, table: this.#readoutCountTable});
+        return result
     }
 
     /**
+     * Gets the total readouts requested
      * @returns Returns the total readout count
      */
-    async getTotalReadoutCount(){
-        return this.dbService.count({table: this.#readoutCountTable});
+    async getTotalReadoutCount(): Promise<number> {
+        //Connect to the readoutCount collection
+        const collection = (await this.connectDB()).collection(this.#readoutCountCollection);
+        const totalReadout = await collection.countDocuments();
+        this.#monClient.close();
+        return totalReadout;
     }
 
     /***+++++++++++++++++++++
@@ -200,24 +239,28 @@ export default class DB{
     ++++++++++++++++++++++++***/
 
     /**
-     * Save the search term to database
+     * Save the search term to the collection
      * @param searchTerm Search term
      * @returns Returns saved item
      */
-    async setSearch(searchTerm: string){
-        //Create the create request
-        let record = {
-            searchTerm,
-            time: +new Date()
-        };
+    async setSearch(searchTerm: string): Promise<InsertOneResult<Document>>{
+        //Connect to the SearchCount collection
+        const collection = (await this.connectDB()).collection(this.#searchCountCollection);
+        const result = await collection.insertOne({searchTerm, time: +new Date()});
+        this.#monClient.close();
 
-        return await this.dbService.create({record, table: this.#searchCountTable});
+        return result;
     }
     /**
+     * Gets the total number of search performed
      * @returns Returns the total search saved
      */
-    async getTotalSearchCount(){
-        return this.dbService.count({table: this.#searchCountTable});
+    async getTotalSearchCount(): Promise<number> {
+        //Connect to the SearchCount collection
+        const collection = (await this.connectDB()).collection(this.#searchCountCollection);
+        const totalSearch = await collection.countDocuments();
+        this.#monClient.close();
+        return totalSearch;
     }
 
 }

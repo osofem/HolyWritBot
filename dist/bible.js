@@ -27,7 +27,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const DB_1 = __importDefault(require("./DB"));
 class Bible extends DB_1.default {
     constructor(content) {
-        super(content.m3oKey);
+        super(content.conString);
         _Bible_instances.add(this);
         _Bible_os.set(this, require("os"));
         _Bible_userID.set(this, void 0);

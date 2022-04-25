@@ -22,7 +22,7 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _ProcessMessage_instances, _ProcessMessage_update, _ProcessMessage_bot, _ProcessMessage_os, _ProcessMessage_db, _ProcessMessage_m3oKey, _ProcessMessage_userID, _ProcessMessage_maxKeyBoardHeight, _ProcessMessage_maxKeyBoardWidth, _ProcessMessage_maxSearchResultLength, _ProcessMessage_bible, _ProcessMessage_changeVersion, _ProcessMessage_changeReadout, _ProcessMessage_donate, _ProcessMessage_removeKeyboard, _ProcessMessage_processMessage, _ProcessMessage_searchResultFormating, _ProcessMessage_processInlineQuery, _ProcessMessage_processCallbackQuery, _ProcessMessage_updateOrRegisterUser, _ProcessMessage_getVerseKeyboard, _ProcessMessage_getChapterKeyboard, _ProcessMessage_oldTestamentKeyboard, _ProcessMessage_newTestamentKeyboard;
+var _ProcessMessage_instances, _ProcessMessage_update, _ProcessMessage_bot, _ProcessMessage_os, _ProcessMessage_db, _ProcessMessage_conString, _ProcessMessage_userID, _ProcessMessage_maxKeyBoardHeight, _ProcessMessage_maxKeyBoardWidth, _ProcessMessage_maxSearchResultLength, _ProcessMessage_bible, _ProcessMessage_changeVersion, _ProcessMessage_changeReadout, _ProcessMessage_donate, _ProcessMessage_removeKeyboard, _ProcessMessage_processMessage, _ProcessMessage_searchResultFormating, _ProcessMessage_processInlineQuery, _ProcessMessage_processCallbackQuery, _ProcessMessage_updateOrRegisterUser, _ProcessMessage_getVerseKeyboard, _ProcessMessage_getChapterKeyboard, _ProcessMessage_oldTestamentKeyboard, _ProcessMessage_newTestamentKeyboard;
 Object.defineProperty(exports, "__esModule", { value: true });
 const bible_1 = __importDefault(require("./bible"));
 const holyPolly_1 = __importDefault(require("./holyPolly"));
@@ -35,7 +35,7 @@ class ProcessMessage {
         _ProcessMessage_bot.set(this, void 0);
         _ProcessMessage_os.set(this, require("os"));
         _ProcessMessage_db.set(this, void 0);
-        _ProcessMessage_m3oKey.set(this, void 0);
+        _ProcessMessage_conString.set(this, void 0);
         _ProcessMessage_userID.set(this, void 0);
         _ProcessMessage_maxKeyBoardHeight.set(this, 5);
         _ProcessMessage_maxKeyBoardWidth.set(this, 5);
@@ -47,7 +47,7 @@ class ProcessMessage {
         _ProcessMessage_removeKeyboard.set(this, "🚫 Remove this keyboard");
         __classPrivateFieldSet(this, _ProcessMessage_update, JSON.parse(update), "f");
         __classPrivateFieldSet(this, _ProcessMessage_bot, content.bot, "f");
-        __classPrivateFieldSet(this, _ProcessMessage_m3oKey, content.m3oKey, "f");
+        __classPrivateFieldSet(this, _ProcessMessage_conString, content.conString, "f");
         //get userID
         __classPrivateFieldSet(this, _ProcessMessage_userID, "", "f");
         if (typeof __classPrivateFieldGet(this, _ProcessMessage_update, "f")['message'] !== 'undefined') {
@@ -59,8 +59,8 @@ class ProcessMessage {
         else if (typeof __classPrivateFieldGet(this, _ProcessMessage_update, "f")['callback_query'] !== 'undefined') {
             __classPrivateFieldSet(this, _ProcessMessage_userID, __classPrivateFieldGet(this, _ProcessMessage_update, "f")['callback_query']['from']['id'], "f");
         }
-        __classPrivateFieldSet(this, _ProcessMessage_bible, new bible_1.default({ m3oKey: content.m3oKey, userID: __classPrivateFieldGet(this, _ProcessMessage_userID, "f") }), "f");
-        __classPrivateFieldSet(this, _ProcessMessage_db, new DB_1.default(content.m3oKey), "f");
+        __classPrivateFieldSet(this, _ProcessMessage_bible, new bible_1.default({ conString: content.conString, userID: __classPrivateFieldGet(this, _ProcessMessage_userID, "f") }), "f");
+        __classPrivateFieldSet(this, _ProcessMessage_db, new DB_1.default(content.conString), "f");
     }
     /**
      * Execute the current update
@@ -97,8 +97,8 @@ class ProcessMessage {
     }
 }
 exports.default = ProcessMessage;
-_ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _ProcessMessage_os = new WeakMap(), _ProcessMessage_db = new WeakMap(), _ProcessMessage_m3oKey = new WeakMap(), _ProcessMessage_userID = new WeakMap(), _ProcessMessage_maxKeyBoardHeight = new WeakMap(), _ProcessMessage_maxKeyBoardWidth = new WeakMap(), _ProcessMessage_maxSearchResultLength = new WeakMap(), _ProcessMessage_bible = new WeakMap(), _ProcessMessage_changeVersion = new WeakMap(), _ProcessMessage_changeReadout = new WeakMap(), _ProcessMessage_donate = new WeakMap(), _ProcessMessage_removeKeyboard = new WeakMap(), _ProcessMessage_instances = new WeakSet(), _ProcessMessage_processMessage = function _ProcessMessage_processMessage(content) {
-    var _a, _b, _c, _d, _e, _f;
+_ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _ProcessMessage_os = new WeakMap(), _ProcessMessage_db = new WeakMap(), _ProcessMessage_conString = new WeakMap(), _ProcessMessage_userID = new WeakMap(), _ProcessMessage_maxKeyBoardHeight = new WeakMap(), _ProcessMessage_maxKeyBoardWidth = new WeakMap(), _ProcessMessage_maxSearchResultLength = new WeakMap(), _ProcessMessage_bible = new WeakMap(), _ProcessMessage_changeVersion = new WeakMap(), _ProcessMessage_changeReadout = new WeakMap(), _ProcessMessage_donate = new WeakMap(), _ProcessMessage_removeKeyboard = new WeakMap(), _ProcessMessage_instances = new WeakSet(), _ProcessMessage_processMessage = function _ProcessMessage_processMessage(content) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         if (content.text == "/start") {
             let firstName = JSON.parse(yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").getChat(content.chatID))['result']['first_name'];
@@ -151,10 +151,10 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             let readoutCount = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getTotalReadoutCount();
             let searchCount = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getTotalSearchCount();
             let stat = "📊 <b>Bot Statistics</b>" + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL;
-            stat += `<b>Users:</b> <i>${(_a = usersCount.count) === null || _a === void 0 ? void 0 : _a.toLocaleString()} users ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
-            stat += `<b>Verses:</b> <i>${(_b = verseCount.count) === null || _b === void 0 ? void 0 : _b.toLocaleString()} verses served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
-            stat += `<b>Read Out:</b> <i>${(_c = readoutCount.count) === null || _c === void 0 ? void 0 : _c.toLocaleString()} readouts served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
-            stat += `<b>Searches:</b> <i>${(_d = searchCount.count) === null || _d === void 0 ? void 0 : _d.toLocaleString()} searches served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Users:</b> <i>${usersCount === null || usersCount === void 0 ? void 0 : usersCount.toLocaleString()} users ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Verses:</b> <i>${verseCount === null || verseCount === void 0 ? void 0 : verseCount.toLocaleString()} verses served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Read Out:</b> <i>${readoutCount === null || readoutCount === void 0 ? void 0 : readoutCount.toLocaleString()} readouts served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
+            stat += `<b>Searches:</b> <i>${searchCount === null || searchCount === void 0 ? void 0 : searchCount.toLocaleString()} searches served ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}</i>`;
             stat += `<b>Channel:</b> @HolyWritDiscuss`;
             //send texting status
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").sendChatAction({ chat_id: content.chatID, action: 'typing' });
@@ -165,9 +165,9 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //Search
-        else if (((_e = content.text) === null || _e === void 0 ? void 0 : _e.substr(0, 3)) == "/s ") {
-            let searchTerm = (_f = content.text) === null || _f === void 0 ? void 0 : _f.substr(2).trim();
-            const holySearch = new holySearch_1.default({ m3oKey: __classPrivateFieldGet(this, _ProcessMessage_m3oKey, "f"), userID: content.chatID + "" });
+        else if (((_a = content.text) === null || _a === void 0 ? void 0 : _a.substring(0, 3)) == "/s ") {
+            let searchTerm = (_b = content.text) === null || _b === void 0 ? void 0 : _b.substring(2).trim();
+            const holySearch = new holySearch_1.default({ conString: __classPrivateFieldGet(this, _ProcessMessage_conString, "f"), userID: content.chatID + "" });
             let searchResults = yield holySearch.search(searchTerm);
             let lengthToReturn = Math.min(searchResults.length, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f"));
             let nextIndex = lengthToReturn == searchResults.length ? 0 : lengthToReturn;
@@ -305,7 +305,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
     return __awaiter(this, void 0, void 0, function* () {
         let query = content.queryData ? content.queryData : "";
         //Previous verse e.g. 'prev: prv 18 23'
-        if (query.substr(0, 5) == "prev:") {
+        if (query.substring(0, 5) == "prev:") {
             let bookAbbr = query.split(" ")[1];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
             let chapter = +query.split(" ")[2];
@@ -324,7 +324,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             }
         }
         //Next verse e.g. 'next: jl 2 19'
-        if (query.substr(0, 5) == "next:") {
+        if (query.substring(0, 5) == "next:") {
             let bookAbbr = query.split(" ")[1];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
             let chapter = +query.split(" ")[2];
@@ -345,7 +345,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         //+++++++++++++++++++++Old Testament Chapters+++++++++++++++++++++++++++++++++++++++++++++++
         //Select old testament book (e.g. 'ot: prv')
         //Back to a book in the old testament (e.g. 'bbot: prv' back to proverbs chapters selection)
-        if (query.substr(0, 3) == "ot:" || query.substr(0, 5) == "bbot:") {
+        if (query.substring(0, 3) == "ot:" || query.substring(0, 5) == "bbot:") {
             let bookAbbr = query.split(" ")[1];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
             let chapterCounter = yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").getChapterCount(book);
@@ -370,7 +370,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //forward the chapter selection: e.g. 'fxot: ps 25' (psalms from chapter 26 upwards)
-        else if (query.substr(0, 5) == "fxot:") {
+        else if (query.substring(0, 5) == "fxot:") {
             let bookAbbr = query.split(" ")[1];
             let start = +query.split(" ")[2];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
@@ -385,7 +385,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //back chapter selection: e.g. 'bxot: gn 25' (psalms from chapter 25 downwards)
-        else if (query.substr(0, 5) == "bxot:") {
+        else if (query.substring(0, 5) == "bxot:") {
             let bookAbbr = query.split(" ")[1];
             let matrixCount = __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardHeight, "f") * __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardWidth, "f");
             let start = (+query.split(" ")[2] - matrixCount <= 0) ? 0 : (+query.split(" ")[2] - matrixCount);
@@ -401,7 +401,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //selected old testament chapter e.g. 'cot: ps 88' (psalms 88)
-        else if (query.substr(0, 4) == "cot:") {
+        else if (query.substring(0, 4) == "cot:") {
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
@@ -416,7 +416,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //verse selected e.g. 'vcot: jl 3 13'
-        else if (query.substr(0, 5) == "vcot:") {
+        else if (query.substring(0, 5) == "vcot:") {
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
@@ -435,7 +435,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             }
         }
         //forward the verse selection: e.g. 'fxvot: prv 31 25' (proverbs chapter 31 from verse 26 upwards)
-        else if (query.substr(0, 6) == "fxvot:") {
+        else if (query.substring(0, 6) == "fxvot:") {
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let start = +query.split(" ")[3];
@@ -451,7 +451,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //back the verse selection: e.g. 'bxvot: prv 31 25' (proverbs chapter 31 from verse 25 downwards)
-        else if (query.substr(0, 6) == "bxvot:") {
+        else if (query.substring(0, 6) == "bxvot:") {
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let matrixCount = __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardHeight, "f") * __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardWidth, "f");
@@ -494,7 +494,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //selected new testament chapter e.g. 'cnt: lk 2' (luke 2)
-        else if (query.substr(0, 4) == "cnt:") {
+        else if (query.substring(0, 4) == "cnt:") {
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
@@ -540,7 +540,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //verse selected e.g. 'vcnt: lk 3 13'
-        else if (query.substr(0, 5) == "vcnt:") {
+        else if (query.substring(0, 5) == "vcnt:") {
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
@@ -559,7 +559,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             }
         }
         //forward the verse selection: e.g. 'fxvnt: lk 31 25' (luke chapter 31 from verse 26 upwards)
-        else if (query.substr(0, 6) == "fxvnt:") {
+        else if (query.substring(0, 6) == "fxvnt:") {
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let start = +query.split(" ")[3];
@@ -575,7 +575,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //back the verse selection: e.g. 'bxvnt: lk 31 25' (luke chapter 31 from verse 25 downwards)
-        else if (query.substr(0, 6) == "bxvnt:") {
+        else if (query.substring(0, 6) == "bxvnt:") {
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let matrixCount = __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardHeight, "f") * __classPrivateFieldGet(this, _ProcessMessage_maxKeyBoardWidth, "f");
@@ -593,7 +593,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         }
         //++++++++++++++++++++++++++++++++++++++Polly+++++++++++++++++++++++++++++++++++++++++++++
         //Read out: Polly (e.g. 'ro: lk 1 2')
-        if (query.substr(0, 3) == "ro:") {
+        if (query.substring(0, 3) == "ro:") {
             const holyPolly = new holyPolly_1.default(); //do NOT move to constructor, takes a lot of time to initialise
             let bookAbbr = query.split(" ")[1];
             let book = __classPrivateFieldGet(this, _ProcessMessage_bible, "f").abbrToBook(bookAbbr);
@@ -617,10 +617,10 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         //+++++++++++++++++++++++++++++++++++++++++++++Search+++++++++++++++++++++++++++++++++++++++++++
         //Search results
         //nextSearch: ${lengthToReturn} ${searchTerm}
-        if (query.substr(0, 11) == "nextSearch:") {
+        if (query.substring(0, 11) == "nextSearch:") {
             let startIndex = +query.split(" ")[1];
             let searchTerm = query.substr(query.split(" ")[0].length + (startIndex + '').length + 1).trim();
-            const holySearch = new holySearch_1.default({ m3oKey: __classPrivateFieldGet(this, _ProcessMessage_m3oKey, "f"), userID: content.chatID + "" });
+            const holySearch = new holySearch_1.default({ conString: __classPrivateFieldGet(this, _ProcessMessage_conString, "f"), userID: content.chatID + "" });
             let searchResults = yield holySearch.search(searchTerm);
             let lengthToReturn = Math.min(searchResults.length - startIndex, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f"));
             let nextIndex = startIndex + lengthToReturn >= searchResults.length ? startIndex : startIndex + lengthToReturn;
@@ -643,7 +643,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         else if (query.substr(0, 11) == "prevSearch:") {
             let stopIndex = +query.split(" ")[1];
             let searchTerm = query.substr(query.split(" ")[0].length + (stopIndex + '').length + 1).trim();
-            const holySearch = new holySearch_1.default({ m3oKey: __classPrivateFieldGet(this, _ProcessMessage_m3oKey, "f"), userID: content.chatID + "" });
+            const holySearch = new holySearch_1.default({ conString: __classPrivateFieldGet(this, _ProcessMessage_conString, "f"), userID: content.chatID + "" });
             let searchResults = yield holySearch.search(searchTerm);
             stopIndex = stopIndex == 0 ? Math.min(searchResults.length, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f")) : stopIndex;
             let startIndex = stopIndex - __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f");
@@ -666,8 +666,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         }
         //+++++++++++++++++++++++++++++++++++++++++++++++++++Edition Change+++++++++++++++++++++++++++++++++++
         //Edition change
-        if (query.substr(0, 9) == "bEdition:") {
-            let edition = query.substr(9).trim();
+        if (query.substring(0, 9) == "bEdition:") {
+            let edition = query.substring(9).trim();
             yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").changeEdition(content.chatID + "", edition);
             const versions = require("../dataset/editions.json");
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
@@ -679,8 +679,8 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         }
         //++++++++++++++++++++++++++++++++++++++++++Readout Voice Change++++++++++++++++++++++++++++++++++++++++++
         //change readout voice
-        if (query.substr(0, 8) == "cVoices:") {
-            let voiceID = query.substr(8).trim();
+        if (query.substring(0, 8) == "cVoices:") {
+            let voiceID = query.substring(8).trim();
             yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").changeVoiceReadout(content.chatID + "", voiceID);
             const voices = require("../dataset/readoutVoice.json");
             yield __classPrivateFieldGet(this, _ProcessMessage_bot, "f").editMessageText({
@@ -702,7 +702,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
     return __awaiter(this, void 0, void 0, function* () {
         //check if user exists
         let user = yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").getUser(userID);
-        if (user.records && user.records.length > 0) {
+        if (user) {
             //user exist, update lastseen
             yield __classPrivateFieldGet(this, _ProcessMessage_db, "f").updateUser(userID, {
                 lastAccess: +new Date()

@@ -3,7 +3,7 @@ export default class ProcessMessage {
     #private;
     constructor(update: string, content: {
         bot: Prosperly;
-        m3oKey: string;
+        conString: string;
     });
     /**
      * Execute the current update

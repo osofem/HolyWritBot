@@ -1,21 +1,23 @@
-import { CacheService } from "m3o/cache";
 export default class UpdateTracker {
-    cache: CacheService;
-    cachePrefix: string | undefined;
+    #private;
     constructor(content: {
-        m3OKey: string;
+        conString: string;
     });
+    /**
+     * Connect to the database
+     */
+    connectDB(): Promise<import("mongodb").Db>;
     /**
      * Retrieves update from cache
      * @param updateID update ID to retrieve
      * @returns Returns the object containing the update
      */
-    getUpdate(updateID: string): Promise<import("m3o/cache").GetResponse>;
+    getUpdate(updateID: string): Promise<import("mongodb").WithId<import("bson").Document> | null>;
     /**
      * Save an update to the cache
      * @param updateID update ID to save
      * @param update update contain to save
-     * @returns Return {"status": "ok"} on success
+     * @returns Return updated document
      */
-    setUpdate(updateID: string, update: string): Promise<import("m3o/cache").SetResponse>;
+    setUpdate(updateID: string, update: string): Promise<import("mongodb").UpdateResult>;
 }

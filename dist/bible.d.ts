@@ -4,7 +4,7 @@ export default class Bible extends DB {
     bible: any;
     edition: string;
     constructor(content: {
-        m3oKey: string;
+        conString: string;
         userID: string;
     });
     /**

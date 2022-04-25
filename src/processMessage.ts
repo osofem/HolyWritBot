@@ -8,17 +8,17 @@ import DB from "./DB";
 import { ReplyKeyboardRemove } from "prosperly/dist/typealiases/replyKeyboardRemove";
 
 export default class ProcessMessage{
-    #update: any; #bot: Prosperly; #os = require("os"); #db: DB; #m3oKey: string; #userID: string;
+    #update: any; #bot: Prosperly; #os = require("os"); #db: DB; #conString: string; #userID: string;
     #maxKeyBoardHeight = 5; #maxKeyBoardWidth = 5; #maxSearchResultLength = 10; #bible: Bible;
     #changeVersion = "🏷 Change Bible Edition";
     #changeReadout = "🗣 Change Read Out Voice";
     #donate = "💳 Donate";
     #removeKeyboard = "🚫 Remove this keyboard";
 
-    constructor(update: string, content: {bot: Prosperly; m3oKey: string}){
+    constructor(update: string, content: {bot: Prosperly; conString: string}){
         this.#update = JSON.parse(update); 
         this.#bot = content.bot;
-        this.#m3oKey = content.m3oKey;
+        this.#conString = content.conString;
         
         //get userID
         this.#userID = "";
@@ -32,8 +32,8 @@ export default class ProcessMessage{
             this.#userID = this.#update['callback_query']['from']['id'];
         }
 
-        this.#bible = new Bible({m3oKey: content.m3oKey, userID: this.#userID});
-        this.#db = new DB(content.m3oKey);
+        this.#bible = new Bible({conString: content.conString, userID: this.#userID});
+        this.#db = new DB(content.conString);
     }
 
     /**
@@ -128,10 +128,10 @@ export default class ProcessMessage{
             let searchCount = await this.#db.getTotalSearchCount();
             
             let stat = "📊 <b>Bot Statistics</b>"+this.#os.EOL+this.#os.EOL;
-            stat += `<b>Users:</b> <i>${usersCount.count?.toLocaleString()} users ${this.#os.EOL}</i>`;
-            stat += `<b>Verses:</b> <i>${verseCount.count?.toLocaleString()} verses served ${this.#os.EOL}</i>`;
-            stat += `<b>Read Out:</b> <i>${readoutCount.count?.toLocaleString()} readouts served ${this.#os.EOL}</i>`;
-            stat += `<b>Searches:</b> <i>${searchCount.count?.toLocaleString()} searches served ${this.#os.EOL}${this.#os.EOL}</i>`;
+            stat += `<b>Users:</b> <i>${usersCount?.toLocaleString()} users ${this.#os.EOL}</i>`;
+            stat += `<b>Verses:</b> <i>${verseCount?.toLocaleString()} verses served ${this.#os.EOL}</i>`;
+            stat += `<b>Read Out:</b> <i>${readoutCount?.toLocaleString()} readouts served ${this.#os.EOL}</i>`;
+            stat += `<b>Searches:</b> <i>${searchCount?.toLocaleString()} searches served ${this.#os.EOL}${this.#os.EOL}</i>`;
             stat += `<b>Channel:</b> @HolyWritDiscuss`;
             
             //send texting status
@@ -144,10 +144,10 @@ export default class ProcessMessage{
             });
         }
         //Search
-        else if(content.text?.substr(0, 3) == "/s "){
-            let searchTerm = content.text?.substr(2).trim();
+        else if(content.text?.substring(0, 3) == "/s "){
+            let searchTerm = content.text?.substring(2).trim();
 
-            const holySearch: HolySearch = new HolySearch({m3oKey: this.#m3oKey, userID: content.chatID+""});
+            const holySearch: HolySearch = new HolySearch({conString: this.#conString, userID: content.chatID+""});
             let searchResults: SearchResult[] = await holySearch.search(searchTerm);
             
             let lengthToReturn = Math.min(searchResults.length, this.#maxSearchResultLength);
@@ -316,7 +316,7 @@ export default class ProcessMessage{
     async #processCallbackQuery(content: contentParam){
         let query = content.queryData?content.queryData:"";
         //Previous verse e.g. 'prev: prv 18 23'
-        if(query.substr(0, 5) == "prev:"){
+        if(query.substring(0, 5) == "prev:"){
             let bookAbbr = query.split(" ")[1];
             let book = this.#bible.abbrToBook(bookAbbr);
             let chapter = +query.split(" ")[2];
@@ -336,7 +336,7 @@ export default class ProcessMessage{
             }
         }
         //Next verse e.g. 'next: jl 2 19'
-        if(query.substr(0, 5) == "next:"){
+        if(query.substring(0, 5) == "next:"){
             let bookAbbr = query.split(" ")[1];
             let book = this.#bible.abbrToBook(bookAbbr);
             let chapter = +query.split(" ")[2];
@@ -358,7 +358,7 @@ export default class ProcessMessage{
         //+++++++++++++++++++++Old Testament Chapters+++++++++++++++++++++++++++++++++++++++++++++++
         //Select old testament book (e.g. 'ot: prv')
         //Back to a book in the old testament (e.g. 'bbot: prv' back to proverbs chapters selection)
-        if(query.substr(0, 3) == "ot:" || query.substr(0, 5) == "bbot:"){
+        if(query.substring(0, 3) == "ot:" || query.substring(0, 5) == "bbot:"){
             let bookAbbr = query.split(" ")[1];
             let book = this.#bible.abbrToBook(bookAbbr);
             let chapterCounter = await this.#bible.getChapterCount(book);
@@ -383,7 +383,7 @@ export default class ProcessMessage{
             });
         }
         //forward the chapter selection: e.g. 'fxot: ps 25' (psalms from chapter 26 upwards)
-        else if(query.substr(0, 5) == "fxot:"){
+        else if(query.substring(0, 5) == "fxot:"){
             let bookAbbr = query.split(" ")[1];
             let start = +query.split(" ")[2];
             let book = this.#bible.abbrToBook(bookAbbr);
@@ -398,7 +398,7 @@ export default class ProcessMessage{
             });
         }
         //back chapter selection: e.g. 'bxot: gn 25' (psalms from chapter 25 downwards)
-        else if(query.substr(0, 5) == "bxot:"){
+        else if(query.substring(0, 5) == "bxot:"){
             let bookAbbr = query.split(" ")[1];
             let matrixCount = this.#maxKeyBoardHeight * this.#maxKeyBoardWidth;
             let start = (+query.split(" ")[2]-matrixCount <= 0)? 0 : (+query.split(" ")[2]-matrixCount);
@@ -414,7 +414,7 @@ export default class ProcessMessage{
             });
         }
         //selected old testament chapter e.g. 'cot: ps 88' (psalms 88)
-        else if(query.substr(0, 4) == "cot:"){
+        else if(query.substring(0, 4) == "cot:"){
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let book = this.#bible.abbrToBook(bookAbbr);
@@ -429,7 +429,7 @@ export default class ProcessMessage{
             });
         }
         //verse selected e.g. 'vcot: jl 3 13'
-        else if(query.substr(0, 5) == "vcot:"){
+        else if(query.substring(0, 5) == "vcot:"){
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let book = this.#bible.abbrToBook(bookAbbr);
@@ -449,7 +449,7 @@ export default class ProcessMessage{
             }
         }
         //forward the verse selection: e.g. 'fxvot: prv 31 25' (proverbs chapter 31 from verse 26 upwards)
-        else if(query.substr(0, 6) == "fxvot:"){
+        else if(query.substring(0, 6) == "fxvot:"){
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let start = +query.split(" ")[3];
@@ -465,7 +465,7 @@ export default class ProcessMessage{
             });
         }
         //back the verse selection: e.g. 'bxvot: prv 31 25' (proverbs chapter 31 from verse 25 downwards)
-        else if(query.substr(0, 6) == "bxvot:"){
+        else if(query.substring(0, 6) == "bxvot:"){
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let matrixCount = this.#maxKeyBoardHeight * this.#maxKeyBoardWidth;
@@ -509,7 +509,7 @@ export default class ProcessMessage{
             });
         }
         //selected new testament chapter e.g. 'cnt: lk 2' (luke 2)
-        else if(query.substr(0, 4) == "cnt:"){
+        else if(query.substring(0, 4) == "cnt:"){
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let book = this.#bible.abbrToBook(bookAbbr);
@@ -555,7 +555,7 @@ export default class ProcessMessage{
             });
         }
         //verse selected e.g. 'vcnt: lk 3 13'
-        else if(query.substr(0, 5) == "vcnt:"){
+        else if(query.substring(0, 5) == "vcnt:"){
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let book = this.#bible.abbrToBook(bookAbbr);
@@ -575,7 +575,7 @@ export default class ProcessMessage{
             }
         }
         //forward the verse selection: e.g. 'fxvnt: lk 31 25' (luke chapter 31 from verse 26 upwards)
-        else if(query.substr(0, 6) == "fxvnt:"){
+        else if(query.substring(0, 6) == "fxvnt:"){
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let start = +query.split(" ")[3];
@@ -591,7 +591,7 @@ export default class ProcessMessage{
             });
         }
         //back the verse selection: e.g. 'bxvnt: lk 31 25' (luke chapter 31 from verse 25 downwards)
-        else if(query.substr(0, 6) == "bxvnt:"){
+        else if(query.substring(0, 6) == "bxvnt:"){
             let bookAbbr = query.split(" ")[1];
             let chapter = +query.split(" ")[2];
             let matrixCount = this.#maxKeyBoardHeight * this.#maxKeyBoardWidth;
@@ -610,7 +610,7 @@ export default class ProcessMessage{
 
         //++++++++++++++++++++++++++++++++++++++Polly+++++++++++++++++++++++++++++++++++++++++++++
         //Read out: Polly (e.g. 'ro: lk 1 2')
-        if(query.substr(0, 3) == "ro:"){
+        if(query.substring(0, 3) == "ro:"){
             const holyPolly: HolyPolly = new HolyPolly(); //do NOT move to constructor, takes a lot of time to initialise
             let bookAbbr = query.split(" ")[1];
             let book = this.#bible.abbrToBook(bookAbbr);
@@ -639,11 +639,11 @@ export default class ProcessMessage{
         //+++++++++++++++++++++++++++++++++++++++++++++Search+++++++++++++++++++++++++++++++++++++++++++
         //Search results
         //nextSearch: ${lengthToReturn} ${searchTerm}
-        if(query.substr(0, 11) == "nextSearch:"){
+        if(query.substring(0, 11) == "nextSearch:"){
             let startIndex = +query.split(" ")[1];
             let searchTerm = query.substr(query.split(" ")[0].length + (startIndex+'').length+1).trim();
 
-            const holySearch: HolySearch = new HolySearch({m3oKey: this.#m3oKey, userID: content.chatID+""});
+            const holySearch: HolySearch = new HolySearch({conString: this.#conString, userID: content.chatID+""});
             let searchResults: SearchResult[] = await holySearch.search(searchTerm);
             
             let lengthToReturn = Math.min(searchResults.length-startIndex, this.#maxSearchResultLength);
@@ -672,7 +672,7 @@ export default class ProcessMessage{
             
             let searchTerm = query.substr(query.split(" ")[0].length + (stopIndex+'').length+1).trim();
 
-            const holySearch: HolySearch = new HolySearch({m3oKey: this.#m3oKey, userID: content.chatID+""});
+            const holySearch: HolySearch = new HolySearch({conString: this.#conString, userID: content.chatID+""});
             let searchResults: SearchResult[] = await holySearch.search(searchTerm);
             
             stopIndex = stopIndex==0?Math.min(searchResults.length, this.#maxSearchResultLength):stopIndex;
@@ -700,8 +700,8 @@ export default class ProcessMessage{
 
         //+++++++++++++++++++++++++++++++++++++++++++++++++++Edition Change+++++++++++++++++++++++++++++++++++
         //Edition change
-        if(query.substr(0, 9) == "bEdition:"){
-            let edition = query.substr(9).trim();
+        if(query.substring(0, 9) == "bEdition:"){
+            let edition = query.substring(9).trim();
             await this.#db.changeEdition(content.chatID+"", edition);
             const versions = require("../dataset/editions.json");
             await this.#bot.editMessageText({
@@ -714,8 +714,8 @@ export default class ProcessMessage{
 
         //++++++++++++++++++++++++++++++++++++++++++Readout Voice Change++++++++++++++++++++++++++++++++++++++++++
         //change readout voice
-        if(query.substr(0, 8) == "cVoices:"){
-            let voiceID = query.substr(8).trim();
+        if(query.substring(0, 8) == "cVoices:"){
+            let voiceID = query.substring(8).trim();
             await this.#db.changeVoiceReadout(content.chatID+"", voiceID);
             const voices = require("../dataset/readoutVoice.json");
             await this.#bot.editMessageText({
@@ -744,7 +744,7 @@ export default class ProcessMessage{
      async #updateOrRegisterUser(userID: string){
         //check if user exists
         let user = await this.#db.getUser(userID);
-        if(user.records && user.records.length > 0){
+        if(user){
             //user exist, update lastseen
             await this.#db.updateUser(userID, {
                 lastAccess: +new Date()

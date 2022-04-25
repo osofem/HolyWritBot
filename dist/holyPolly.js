@@ -22,6 +22,9 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var _HolyPolly_AWS, _HolyPolly_Polly, _HolyPolly_fs;
 Object.defineProperty(exports, "__esModule", { value: true });
 class HolyPolly {
+    /**
+     * Fire up the Holy Polly :)
+     */
     constructor() {
         _HolyPolly_AWS.set(this, void 0);
         _HolyPolly_Polly.set(this, void 0);

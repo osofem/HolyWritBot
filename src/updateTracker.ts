@@ -1,10 +1,20 @@
-import { CacheService } from "m3o/cache";
+import { MongoClient } from 'mongodb'
 
 export default class UpdateTracker{
-    cache; cachePrefix = process.env.cachePrefix;
+    #dbName = process.env.dbName?process.env.dbName:"xnHolyWrit";
+    #cacheCollection = process.env.cachePrefix?process.env.cachePrefix:"xnHolyWritCacheUpdate";
+    #monClient;
 
-    constructor(content: {m3OKey: string}){
-        this.cache = new CacheService(content.m3OKey);
+    constructor(content: {conString: string}){
+        this.#monClient = new MongoClient(content.conString);
+    }
+
+    /**
+     * Connect to the database
+     */
+     async connectDB(){
+        await this.#monClient.connect();
+        return this.#monClient.db(this.#dbName);
     }
 
     /**
@@ -13,23 +23,27 @@ export default class UpdateTracker{
      * @returns Returns the object containing the update
      */
     async getUpdate(updateID: string) {
-        return await this.cache.get({
-            key: this.cachePrefix+updateID
-        });
+        //Connect to the cache collection
+        const collection = (await this.connectDB()).collection(this.#cacheCollection);
+        const cache = await collection.findOne({updateID});
+        this.#monClient.close();
+
+        return cache;
     }
 
     /**
      * Save an update to the cache
      * @param updateID update ID to save
      * @param update update contain to save
-     * @returns Return {"status": "ok"} on success
+     * @returns Return updated document
      */
     async setUpdate(updateID: string, update: string) {
-        return await this.cache.set({
-            key: this.cachePrefix+updateID,
-            value: update,
-            ttl: 7*24*60*60 // 7days validity. Automatically deletes after 7 days
-        });
+        //Connect to the cache collection
+        const collection = (await this.connectDB()).collection(this.#cacheCollection);
+        const result = await collection.updateOne({updateID}, {$set:{update, ttl: +new Date()}}, {upsert: true})
+        this.#monClient.close();
+        
+        return result;
     }
 }
 

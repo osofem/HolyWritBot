@@ -1,5 +1,8 @@
 export default class HolyPolly {
     #private;
+    /**
+     * Fire up the Holy Polly :)
+     */
     constructor();
     /**
      * Turn text to speech

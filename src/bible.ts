@@ -3,8 +3,8 @@ import DB from "./DB";
 export default class Bible extends DB{
     bible: any; #os = require("os"); edition: string; #userID: string;
 
-    constructor(content: {m3oKey: string; userID: string}){
-        super(content.m3oKey);
+    constructor(content: {conString: string; userID: string}){
+        super(content.conString);
         this.edition = "";
         this.#userID = content.userID;
     }
