@@ -227,7 +227,7 @@ export default class ProcessMessage{
                 reply_markup: keyboard
             });
         }
-        else if(content.text == this.#donate){
+        else if(content.text == this.#donate || content.text == "/donate"){
             let inline_keyboard = [];
             inline_keyboard.push([
                 { text: "💳 Donate", url: process.env.donateURL}
@@ -236,7 +236,7 @@ export default class ProcessMessage{
 
             await this.#bot.sendMessage({
                 chat_id: content.chatID,
-                text: "Thank you for your donations, all donations will go towards server fees and developers stipends.",
+                text: "Thank you for your donations, all donations will go towards server fees and developer's stipends.",
                 parse_mode: "HTML",
                 reply_markup: keyboard
             });
