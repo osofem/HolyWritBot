@@ -29,11 +29,11 @@ class DB {
      */
     constructor(conString) {
         _DB_monClient.set(this, void 0);
-        _DB_dbName.set(this, process.env.dbName ? process.env.dbName : "xnHolyWrit");
-        _DB_usersCollection.set(this, process.env.usersTable ? process.env.usersTable : "xnUsers");
-        _DB_versesCountCollection.set(this, process.env.versesCountTable ? process.env.versesCountTable : "xnVerseCount");
-        _DB_readoutCountCollection.set(this, process.env.readoutCountTable ? process.env.readoutCountTable : "xnReadoutCount");
-        _DB_searchCountCollection.set(this, process.env.searchCountTable ? process.env.searchCountTable : "xnSearchCount");
+        _DB_dbName.set(this, process.env.dbName ? process.env.dbName : "devHolyWrit");
+        _DB_usersCollection.set(this, process.env.usersTable ? process.env.usersTable : "devHolyWritUsers");
+        _DB_versesCountCollection.set(this, process.env.versesCountTable ? process.env.versesCountTable : "devHolyWritVerseCount");
+        _DB_readoutCountCollection.set(this, process.env.readoutCountTable ? process.env.readoutCountTable : "devHolyWritReadoutCount");
+        _DB_searchCountCollection.set(this, process.env.searchCountTable ? process.env.searchCountTable : "devHolyWritSearchCount");
         __classPrivateFieldSet(this, _DB_monClient, new mongodb_1.MongoClient(conString), "f");
     }
     /**
@@ -157,12 +157,17 @@ class DB {
         return __awaiter(this, void 0, void 0, function* () {
             //Connect to the user collection
             const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_usersCollection, "f"));
-            const user = yield collection.findOne({ userID });
+            //Please DO NOT change back to 
+            //const user = await collection.findOne({userID}); 
+            //almost shot myself in the head wondering why it's not working
+            const user = yield collection.findOne({ userID: userID + "" });
             __classPrivateFieldGet(this, _DB_monClient, "f").close();
-            if (user != null)
-                return user['edition'] != undefined ? user['edition'] : 'kjv';
-            else
+            if (user) {
+                return user['edition'] ? user['edition'] : 'kjv';
+            }
+            else {
                 return "kjv";
+            }
         });
     }
     /**
@@ -176,8 +181,8 @@ class DB {
             const collection = (yield this.connectDB()).collection(__classPrivateFieldGet(this, _DB_usersCollection, "f"));
             const user = yield collection.findOne({ userID });
             __classPrivateFieldGet(this, _DB_monClient, "f").close();
-            if (user != null)
-                return user['voiceID'] != undefined ? user['voiceID'] : 'ID1';
+            if (user)
+                return user['voiceID'] ? user['voiceID'] : 'ID1';
             else
                 return "ID1";
         });

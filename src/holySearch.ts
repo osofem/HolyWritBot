@@ -1,21 +1,26 @@
-import Bible from "./bible";
+import DB from "./DB";
 
-export default class HolySearch extends Bible{
+export default class HolySearch{
+    #conString: string; #userID: string;
 
     constructor(content: {conString: string; userID: string}){
-        super(content);
+        this.#conString = content.conString;
+        this.#userID = content.userID;
     }
 
     async search(word: string): Promise<SearchResult[]>{
-        //Load bible properly
-        await this.execute();
         
-        let keys = Object.keys(this.bible);
+        //find user's selected edition
+        let db = new DB(this.#conString);
+        let edition = await db.getCurrentEdition(this.#userID);
+        let bible = require(`../dataset/${edition}.json`);
+
+        let keys = Object.keys(bible);
 
         let results = [];
 
         for(let i = 0; i < keys.length; i++){
-            let book = this.bible[keys[i]];
+            let book = bible[keys[i]];
             let chapters = book['chapters'];
             for(let j = 0; j < chapters.length; j++){
                 let verses = chapters[j];
@@ -28,9 +33,10 @@ export default class HolySearch extends Bible{
                             bookAbbr: book.abbreviation,
                             chapter: j+1,
                             verse: k+1,
-                            text: await this.refineVerseReadOut(verse)
+                            text: verse,
+                            edition
                         }
-                        results. push(result);
+                        results.push(result);
                     }
                 }
             }
@@ -45,6 +51,7 @@ export type SearchResult = {
     chapter: number;
     verse: number;
     text: string;
+    edition : string;
 }
 
 module.exports = HolySearch;

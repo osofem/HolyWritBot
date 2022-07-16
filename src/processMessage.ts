@@ -7,6 +7,7 @@ import HolySearch, { SearchResult } from "./holySearch";
 import DB from "./DB";
 import { ReplyKeyboardRemove } from "prosperly/dist/typealiases/replyKeyboardRemove";
 
+
 export default class ProcessMessage{
     #update: any; #bot: Prosperly; #os = require("os"); #db: DB; #conString: string; #userID: string;
     #maxKeyBoardHeight = 5; #maxKeyBoardWidth = 5; #maxSearchResultLength = 10; #bible: Bible;
@@ -32,16 +33,14 @@ export default class ProcessMessage{
             this.#userID = this.#update['callback_query']['from']['id'];
         }
 
-        this.#bible = new Bible({conString: content.conString, userID: this.#userID});
         this.#db = new DB(content.conString);
+        this.#bible = new Bible({conString: content.conString, userID: this.#userID});
     }
 
     /**
      * Execute the current update
      */
      async execute(){
-        //Load bible properly
-        await this.#bible.execute();
 
         let update = this.#update;
         //message //////////////////////
@@ -75,6 +74,7 @@ export default class ProcessMessage{
     // PROCESS MESSAGE
     // ***********************/
     async #processMessage(content: contentParam){
+
         if(content.text == "/start"){
             let firstName = JSON.parse(await this.#bot.getChat(content.chatID))['result']['first_name'];
             //send texting status
@@ -288,7 +288,11 @@ export default class ProcessMessage{
      * @returns Returns paged result
      */
     async #searchResultFormating(searchResults: SearchResult[], start: number, length: number): Promise<string>{
-        let result = `<i>${searchResults.length} result(s) from the ${this.#bible.edition.toUpperCase()} edition</i>${this.#os.EOL+this.#os.EOL}`;
+        let result = "";
+
+        if(searchResults.length > 0){
+            result = `<i>${searchResults.length.toLocaleString()} result(s) from the ${searchResults[0].edition.toUpperCase()} edition</i>${this.#os.EOL+this.#os.EOL}`;
+        }
 
         let i = start<0?0:start>searchResults.length?0:start;
         length = length>(searchResults.length-start)?searchResults.length-start:length;
@@ -298,7 +302,7 @@ export default class ProcessMessage{
             result += `${i+1}. <b>${r['book']} ${r['chapter']}:${r['verse']} - </b> <i>${r['text']}</i> ${this.#os.EOL+this.#os.EOL}`;
         }
 
-        result += `<i>Result(s) ${start+1} to ${i} of ${searchResults.length}</i>`;
+        result += `<i>Result(s) ${(start+1).toLocaleString()} to ${(i).toLocaleString()} of ${searchResults.length.toLocaleString()}</i>`;
         return result;
     }
 
@@ -314,6 +318,7 @@ export default class ProcessMessage{
     // CALLBACK QUERY
     // ***********************/
     async #processCallbackQuery(content: contentParam){
+
         let query = content.queryData?content.queryData:"";
         //Previous verse e.g. 'prev: prv 18 23'
         if(query.substring(0, 5) == "prev:"){
@@ -641,7 +646,7 @@ export default class ProcessMessage{
         //nextSearch: ${lengthToReturn} ${searchTerm}
         if(query.substring(0, 11) == "nextSearch:"){
             let startIndex = +query.split(" ")[1];
-            let searchTerm = query.substr(query.split(" ")[0].length + (startIndex+'').length+1).trim();
+            let searchTerm = query.substring(query.split(" ")[0].length + (startIndex+'').length+1).trim();
 
             const holySearch: HolySearch = new HolySearch({conString: this.#conString, userID: content.chatID+""});
             let searchResults: SearchResult[] = await holySearch.search(searchTerm);
@@ -667,10 +672,10 @@ export default class ProcessMessage{
             });
         }
         //prevSearch: ${index} ${searchTerm}
-        else if(query.substr(0, 11) == "prevSearch:"){
+        else if(query.substring(0, 11) == "prevSearch:"){
             let stopIndex = +query.split(" ")[1];
             
-            let searchTerm = query.substr(query.split(" ")[0].length + (stopIndex+'').length+1).trim();
+            let searchTerm = query.substring(query.split(" ")[0].length + (stopIndex+'').length+1).trim();
 
             const holySearch: HolySearch = new HolySearch({conString: this.#conString, userID: content.chatID+""});
             let searchResults: SearchResult[] = await holySearch.search(searchTerm);

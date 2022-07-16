@@ -1,16 +1,14 @@
 import DB from "./DB";
-export default class Bible extends DB {
+export default class Bible {
     #private;
-    bible: any;
     edition: string;
+    db: DB;
+    bible: any;
     constructor(content: {
         conString: string;
         userID: string;
     });
-    /**
-     * Execute bible: properly loadup the bible
-     */
-    execute(): Promise<void>;
+    loadBible(): Promise<void>;
     /**
      * Get the verse of the bible
      * @param data The verse to look up e.g. 1 Chronicles 3 4, John 3:16, etc

@@ -1,8 +1,8 @@
 import { MongoClient } from 'mongodb'
 
 export default class UpdateTracker{
-    #dbName = process.env.dbName?process.env.dbName:"xnHolyWrit";
-    #cacheCollection = process.env.cachePrefix?process.env.cachePrefix:"xnHolyWritCacheUpdate";
+    #dbName = process.env.dbName?process.env.dbName:"devHolyWrit";
+    #cacheCollection = process.env.cachePrefix?process.env.cachePrefix:"devHolyWritCacheUpdate";
     #monClient;
 
     constructor(content: {conString: string}){

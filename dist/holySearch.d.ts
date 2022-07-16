@@ -1,5 +1,5 @@
-import Bible from "./bible";
-export default class HolySearch extends Bible {
+export default class HolySearch {
+    #private;
     constructor(content: {
         conString: string;
         userID: string;
@@ -12,4 +12,5 @@ export declare type SearchResult = {
     chapter: number;
     verse: number;
     text: string;
+    edition: string;
 };

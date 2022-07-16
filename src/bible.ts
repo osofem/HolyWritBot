@@ -1,22 +1,22 @@
 import DB from "./DB";
 
-export default class Bible extends DB{
-    bible: any; #os = require("os"); edition: string; #userID: string;
+export default class Bible /*extends DB*/{
+    #os = require("os"); edition: string; #userID: string; #conString: string;
+    db: DB; bible: any;
 
     constructor(content: {conString: string; userID: string}){
-        super(content.conString);
-        this.edition = "";
+        this.#conString = content.conString;
         this.#userID = content.userID;
+        this.edition = "";
+        this.db = new DB(this.#conString);
     }
 
-    /**
-     * Execute bible: properly loadup the bible
-     */
-    async execute(){
-        this.edition = await this.getCurrentEdition(this.#userID);
-        //load bible
+    async loadBible(){
+        //find user's selected edition
+        this.edition = await this.db.getCurrentEdition(this.#userID);
         this.bible = require(`../dataset/${this.edition}.json`);
     }
+
 
     /**
      * Get the verse of the bible
@@ -24,6 +24,9 @@ export default class Bible extends DB{
      * @returns Returns the verse
      */
     async verse(data: string): Promise<any>{
+        
+        await this.loadBible();
+
         //data should be in the format [book chapter:verse] or [book chapter verse]
         let book, chapter, verse;
         let vdata = data.replace(/\s+/gi, " ").split(" ");
@@ -76,6 +79,7 @@ export default class Bible extends DB{
      * @returns Returns the number of chapters in the specified book
      */
     async getChapterCount(book: string){
+        await this.loadBible();
         return this.bible[book]['chapters'].length;
     }
 
@@ -86,6 +90,7 @@ export default class Bible extends DB{
      * @returns Returns the number of verses in the specified chapter
      */
     async getVerseCount(book: string, chapter: number){
+        await this.loadBible();
         return this.bible[book]['chapters'][chapter-1].length;
     }
     
@@ -100,6 +105,8 @@ export default class Bible extends DB{
     async #lookup(book: string, chapter: number, verse: number): Promise<string>{
         book = book.toLowerCase();
         try{
+            await this.loadBible();
+
             let v = this.bible[book]['chapters'][chapter-1][verse-1];
             return v;
         }catch(e: any){
@@ -117,6 +124,8 @@ export default class Bible extends DB{
      async lookupForReadOut(book: string, chapter: number, verse: number): Promise<string>{
         book = book.toLowerCase();
         try{
+            await this.loadBible();
+
             let v = this.bible[book]['chapters'][chapter-1][verse-1];
             return await this.refineVerseReadOut(v);
         }catch(e: any){
@@ -154,6 +163,8 @@ export default class Bible extends DB{
      * @returns The inlinkeyboard associated with the verse
      */
     async #keyboard(book: string, chapter: number, verse: number){
+        await this.loadBible();
+
         //If first verse, previous button should be omitted
         if(verse == 1){
             let inline_keyboard = [];
@@ -263,7 +274,6 @@ export default class Bible extends DB{
         }
         return abbr[abbreviation];
     }
-
 }
 
 module.exports = Bible;

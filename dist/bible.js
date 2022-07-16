@@ -22,25 +22,24 @@ var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _Bible_instances, _Bible_os, _Bible_userID, _Bible_lookup, _Bible_refineVerse, _Bible_keyboard;
+var _Bible_instances, _Bible_os, _Bible_userID, _Bible_conString, _Bible_lookup, _Bible_refineVerse, _Bible_keyboard;
 Object.defineProperty(exports, "__esModule", { value: true });
 const DB_1 = __importDefault(require("./DB"));
-class Bible extends DB_1.default {
+class Bible /*extends DB*/ {
     constructor(content) {
-        super(content.conString);
         _Bible_instances.add(this);
         _Bible_os.set(this, require("os"));
         _Bible_userID.set(this, void 0);
-        this.edition = "";
+        _Bible_conString.set(this, void 0);
+        __classPrivateFieldSet(this, _Bible_conString, content.conString, "f");
         __classPrivateFieldSet(this, _Bible_userID, content.userID, "f");
+        this.edition = "";
+        this.db = new DB_1.default(__classPrivateFieldGet(this, _Bible_conString, "f"));
     }
-    /**
-     * Execute bible: properly loadup the bible
-     */
-    execute() {
+    loadBible() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.edition = yield this.getCurrentEdition(__classPrivateFieldGet(this, _Bible_userID, "f"));
-            //load bible
+            //find user's selected edition
+            this.edition = yield this.db.getCurrentEdition(__classPrivateFieldGet(this, _Bible_userID, "f"));
             this.bible = require(`../dataset/${this.edition}.json`);
         });
     }
@@ -51,6 +50,7 @@ class Bible extends DB_1.default {
      */
     verse(data) {
         return __awaiter(this, void 0, void 0, function* () {
+            yield this.loadBible();
             //data should be in the format [book chapter:verse] or [book chapter verse]
             let book, chapter, verse;
             let vdata = data.replace(/\s+/gi, " ").split(" ");
@@ -101,6 +101,7 @@ class Bible extends DB_1.default {
      */
     getChapterCount(book) {
         return __awaiter(this, void 0, void 0, function* () {
+            yield this.loadBible();
             return this.bible[book]['chapters'].length;
         });
     }
@@ -112,6 +113,7 @@ class Bible extends DB_1.default {
      */
     getVerseCount(book, chapter) {
         return __awaiter(this, void 0, void 0, function* () {
+            yield this.loadBible();
             return this.bible[book]['chapters'][chapter - 1].length;
         });
     }
@@ -126,6 +128,7 @@ class Bible extends DB_1.default {
         return __awaiter(this, void 0, void 0, function* () {
             book = book.toLowerCase();
             try {
+                yield this.loadBible();
                 let v = this.bible[book]['chapters'][chapter - 1][verse - 1];
                 return yield this.refineVerseReadOut(v);
             }
@@ -224,10 +227,11 @@ class Bible extends DB_1.default {
     }
 }
 exports.default = Bible;
-_Bible_os = new WeakMap(), _Bible_userID = new WeakMap(), _Bible_instances = new WeakSet(), _Bible_lookup = function _Bible_lookup(book, chapter, verse) {
+_Bible_os = new WeakMap(), _Bible_userID = new WeakMap(), _Bible_conString = new WeakMap(), _Bible_instances = new WeakSet(), _Bible_lookup = function _Bible_lookup(book, chapter, verse) {
     return __awaiter(this, void 0, void 0, function* () {
         book = book.toLowerCase();
         try {
+            yield this.loadBible();
             let v = this.bible[book]['chapters'][chapter - 1][verse - 1];
             return v;
         }
@@ -243,6 +247,7 @@ _Bible_os = new WeakMap(), _Bible_userID = new WeakMap(), _Bible_instances = new
     });
 }, _Bible_keyboard = function _Bible_keyboard(book, chapter, verse) {
     return __awaiter(this, void 0, void 0, function* () {
+        yield this.loadBible();
         //If first verse, previous button should be omitted
         if (verse == 1) {
             let inline_keyboard = [];

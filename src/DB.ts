@@ -2,11 +2,11 @@ import { InsertOneResult, MongoClient, UpdateResult, WithId } from 'mongodb'
 
 export default class DB{
     #monClient;
-    #dbName = process.env.dbName?process.env.dbName:"xnHolyWrit";
-    #usersCollection = process.env.usersTable?process.env.usersTable:"xnUsers";
-    #versesCountCollection = process.env.versesCountTable?process.env.versesCountTable:"xnVerseCount";
-    #readoutCountCollection = process.env.readoutCountTable?process.env.readoutCountTable:"xnReadoutCount";
-    #searchCountCollection = process.env.searchCountTable?process.env.searchCountTable:"xnSearchCount";
+    #dbName = process.env.dbName?process.env.dbName:"devHolyWrit";
+    #usersCollection = process.env.usersTable?process.env.usersTable:"devHolyWritUsers";
+    #versesCountCollection = process.env.versesCountTable?process.env.versesCountTable:"devHolyWritVerseCount";
+    #readoutCountCollection = process.env.readoutCountTable?process.env.readoutCountTable:"devHolyWritReadoutCount";
+    #searchCountCollection = process.env.searchCountTable?process.env.searchCountTable:"devHolyWritSearchCount";
 
 
     /**
@@ -148,13 +148,18 @@ export default class DB{
     async getCurrentEdition(userID: string): Promise<string>{
         //Connect to the user collection
         const collection = (await this.connectDB()).collection(this.#usersCollection);
-        const user = await collection.findOne({userID});
+        //Please DO NOT change back to 
+        //const user = await collection.findOne({userID}); 
+        //almost shot myself in the head wondering why it's not working
+        const user = await collection.findOne({userID: userID+""});
         this.#monClient.close();
 
-        if(user != null)
-            return user['edition']!=undefined?user['edition']:'kjv';
-        else
+        if(user){
+            return user['edition']?user['edition']:'kjv';
+        } 
+        else{
             return "kjv";
+        } 
     }
 
     /**
@@ -168,8 +173,8 @@ export default class DB{
         const user = await collection.findOne({userID});
         this.#monClient.close();
 
-        if(user != null)
-            return user['voiceID']!=undefined?user['voiceID']:'ID1';
+        if(user)
+            return user['voiceID']?user['voiceID']:'ID1';
         else
             return "ID1";
     }

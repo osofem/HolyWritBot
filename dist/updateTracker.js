@@ -24,8 +24,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongodb_1 = require("mongodb");
 class UpdateTracker {
     constructor(content) {
-        _UpdateTracker_dbName.set(this, process.env.dbName ? process.env.dbName : "xnHolyWrit");
-        _UpdateTracker_cacheCollection.set(this, process.env.cachePrefix ? process.env.cachePrefix : "xnHolyWritCacheUpdate");
+        _UpdateTracker_dbName.set(this, process.env.dbName ? process.env.dbName : "devHolyWrit");
+        _UpdateTracker_cacheCollection.set(this, process.env.cachePrefix ? process.env.cachePrefix : "devHolyWritCacheUpdate");
         _UpdateTracker_monClient.set(this, void 0);
         __classPrivateFieldSet(this, _UpdateTracker_monClient, new mongodb_1.MongoClient(content.conString), "f");
     }

@@ -59,16 +59,14 @@ class ProcessMessage {
         else if (typeof __classPrivateFieldGet(this, _ProcessMessage_update, "f")['callback_query'] !== 'undefined') {
             __classPrivateFieldSet(this, _ProcessMessage_userID, __classPrivateFieldGet(this, _ProcessMessage_update, "f")['callback_query']['from']['id'], "f");
         }
-        __classPrivateFieldSet(this, _ProcessMessage_bible, new bible_1.default({ conString: content.conString, userID: __classPrivateFieldGet(this, _ProcessMessage_userID, "f") }), "f");
         __classPrivateFieldSet(this, _ProcessMessage_db, new DB_1.default(content.conString), "f");
+        __classPrivateFieldSet(this, _ProcessMessage_bible, new bible_1.default({ conString: content.conString, userID: __classPrivateFieldGet(this, _ProcessMessage_userID, "f") }), "f");
     }
     /**
      * Execute the current update
      */
     execute() {
         return __awaiter(this, void 0, void 0, function* () {
-            //Load bible properly
-            yield __classPrivateFieldGet(this, _ProcessMessage_bible, "f").execute();
             let update = __classPrivateFieldGet(this, _ProcessMessage_update, "f");
             //message //////////////////////
             if (typeof update['message'] !== 'undefined') {
@@ -286,14 +284,17 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
     });
 }, _ProcessMessage_searchResultFormating = function _ProcessMessage_searchResultFormating(searchResults, start, length) {
     return __awaiter(this, void 0, void 0, function* () {
-        let result = `<i>${searchResults.length} result(s) from the ${__classPrivateFieldGet(this, _ProcessMessage_bible, "f").edition.toUpperCase()} edition</i>${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}`;
+        let result = "";
+        if (searchResults.length > 0) {
+            result = `<i>${searchResults.length.toLocaleString()} result(s) from the ${searchResults[0].edition.toUpperCase()} edition</i>${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}`;
+        }
         let i = start < 0 ? 0 : start > searchResults.length ? 0 : start;
         length = length > (searchResults.length - start) ? searchResults.length - start : length;
         for (; i < length + start; i++) {
             let r = searchResults[i];
             result += `${i + 1}. <b>${r['book']} ${r['chapter']}:${r['verse']} - </b> <i>${r['text']}</i> ${__classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL + __classPrivateFieldGet(this, _ProcessMessage_os, "f").EOL}`;
         }
-        result += `<i>Result(s) ${start + 1} to ${i} of ${searchResults.length}</i>`;
+        result += `<i>Result(s) ${(start + 1).toLocaleString()} to ${(i).toLocaleString()} of ${searchResults.length.toLocaleString()}</i>`;
         return result;
     });
 }, _ProcessMessage_processInlineQuery = function _ProcessMessage_processInlineQuery(content) {
@@ -619,7 +620,7 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
         //nextSearch: ${lengthToReturn} ${searchTerm}
         if (query.substring(0, 11) == "nextSearch:") {
             let startIndex = +query.split(" ")[1];
-            let searchTerm = query.substr(query.split(" ")[0].length + (startIndex + '').length + 1).trim();
+            let searchTerm = query.substring(query.split(" ")[0].length + (startIndex + '').length + 1).trim();
             const holySearch = new holySearch_1.default({ conString: __classPrivateFieldGet(this, _ProcessMessage_conString, "f"), userID: content.chatID + "" });
             let searchResults = yield holySearch.search(searchTerm);
             let lengthToReturn = Math.min(searchResults.length - startIndex, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f"));
@@ -640,9 +641,9 @@ _ProcessMessage_update = new WeakMap(), _ProcessMessage_bot = new WeakMap(), _Pr
             });
         }
         //prevSearch: ${index} ${searchTerm}
-        else if (query.substr(0, 11) == "prevSearch:") {
+        else if (query.substring(0, 11) == "prevSearch:") {
             let stopIndex = +query.split(" ")[1];
-            let searchTerm = query.substr(query.split(" ")[0].length + (stopIndex + '').length + 1).trim();
+            let searchTerm = query.substring(query.split(" ")[0].length + (stopIndex + '').length + 1).trim();
             const holySearch = new holySearch_1.default({ conString: __classPrivateFieldGet(this, _ProcessMessage_conString, "f"), userID: content.chatID + "" });
             let searchResults = yield holySearch.search(searchTerm);
             stopIndex = stopIndex == 0 ? Math.min(searchResults.length, __classPrivateFieldGet(this, _ProcessMessage_maxSearchResultLength, "f")) : stopIndex;

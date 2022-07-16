@@ -28,9 +28,9 @@ exports.handler = async (event) => {
 
             //process
             let requestBody = event.body;
-            let process = new ProcessMessage(requestBody, {bot, conString});
+            let processV = new ProcessMessage(requestBody, {bot, conString});
             promise = new Promise((resolve, reject)=>{
-                process.execute().then(()=>{
+                processV.execute().then(()=>{
                     resolve({statusCode: 200, body: ''});
                 }).catch((err)=>{reject(err);});  
             });
