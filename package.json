@@ -1,6 +1,6 @@
 {
   "name": "holywritbot",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "The Holy Writ",
   "main": "index.js",
   "scripts": {
@@ -18,6 +18,6 @@
   "dependencies": {
     "mongodb": "^4.5.0",
     "node-id3": "^0.2.3",
-    "prosperly": "^1.0.1"
+    "prosperly": "^2.0.0"
   }
 }
