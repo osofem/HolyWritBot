@@ -46,7 +46,7 @@ export default class HolyPolly{
                 //Write ID3 tag
                 const tags = {
                     title: filename,
-                    artist: "Holy Writ / @HolyWritBot",
+                    artist: "Holy Writ @HolyWritBot",
                     album: "The Bible",
                     APIC: './albumart.jpg',
                 };
